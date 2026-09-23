@@ -1,0 +1,12 @@
+# Environment-agnostic manifests. Overlays set image, hostnames, replicas, and extras.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: hive
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: hive-site
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml

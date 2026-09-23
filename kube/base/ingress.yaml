@@ -1,0 +1,19 @@
+# Standard networking.k8s.io/v1 Ingress (not Traefik IngressRoute) so it ports to any controller.
+# Overlays replace the host via JSON patch.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hive-site
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: hive.example.invalid
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hive-site
+                port:
+                  name: http

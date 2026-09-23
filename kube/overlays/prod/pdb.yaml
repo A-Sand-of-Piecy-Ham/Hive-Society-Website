@@ -1,0 +1,10 @@
+# Keep at least one web pod up during node drains / k3s upgrades.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: hive-site
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hive-site

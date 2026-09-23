@@ -1,0 +1,37 @@
+# k3s (Droplet or self-hosted) behind a Cloudflare Tunnel. No inbound ports needed.
+# One-time: kubectl create namespace hive
+#           kubectl -n hive create secret generic cloudflared-token --from-literal=token=<tunnel token>
+# Deploy:   kubectl apply -k kube/overlays/prod
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: hive # base sets this for its own resources only; overlay-local resources need it too
+resources:
+  - ../../base
+  - cloudflared.yaml
+  - pdb.yaml
+images:
+  - name: hive-site
+    newName: ghcr.io/CHANGE_ME/hive-site # TODO: GitHub org/user
+    newTag: "0.1.0" # CI: `kustomize edit set image hive-site=ghcr.io/<org>/hive-site:<sha>`
+replicas:
+  - name: hive-site
+    count: 2
+patches:
+  - target: { kind: Ingress, name: hive-site }
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: hivesocietyimprov.com
+      - op: add
+        path: /spec/rules/-
+        value:
+          host: www.hivesocietyimprov.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: hive-site
+                    port:
+                      name: http

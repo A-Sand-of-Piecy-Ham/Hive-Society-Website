@@ -1,0 +1,48 @@
+# Remotely-managed Cloudflare Tunnel. Routing lives in the Cloudflare dashboard:
+#   Zero Trust -> Networks -> Tunnels -> <tunnel> -> Public hostnames
+#     hivesocietyimprov.com, www.hivesocietyimprov.com  ->  http://traefik.kube-system.svc.cluster.local:80
+# Traefik then routes by Host header using the Ingress, so the same Ingress works with or without the tunnel.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  labels:
+    app.kubernetes.io/name: cloudflared
+spec:
+  replicas: 2 # each replica is an independent tunnel connector; Cloudflare load-balances across them
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudflared
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532 # distroless nonroot
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:2026.9.1
+          args: [tunnel, --no-autoupdate, --metrics, 0.0.0.0:2000, run]
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflared-token
+                  key: token
+          livenessProbe:
+            httpGet: { path: /ready, port: 2000 }
+            failureThreshold: 1
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
