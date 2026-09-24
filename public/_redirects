@@ -1,0 +1,7 @@
+# Cloudflare Pages redirects (https://developers.cloudflare.com/pages/configuration/redirects/).
+# Old page URLs stay working after a rename: bookmarks, search results, links in bios.
+# Format: <old path> <new path> <status>. tests/redirects.test.mts checks every target exists.
+/contactus          /contact-us    301
+/contactus.html     /contact-us    301
+/mailinglist        /mailing-list  301
+/mailinglist.html   /mailing-list  301

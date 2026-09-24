@@ -25,6 +25,7 @@ Website for Hive Society Improv (UIUC), https://hivesocietyimprov.com. Today it'
 | Tests (node:test) | `npm test` |
 | Theme rules check | `npm run validate:theme` |
 | Lint | `npm run lint` |
+| HTML validation (a11y, structure) | `npm run lint:html` |
 | Type check | `npm run typecheck` |
 | Render k8s manifests | `kubectl kustomize kube/overlays/local` (or `prod`) |
 | Image limits check | `npm run check:images` |
@@ -34,7 +35,7 @@ Full reference with options, deploys, and setup: [docs/RUNBOOK.md](docs/RUNBOOK.
 
 Node 24+ runs `.mts` directly via type stripping; there's no build step. `tsconfig.json` sets `erasableSyntaxOnly`, so **don't use `enum`, `namespace`, or constructor parameter properties**.
 
-**Before calling a change done:** `npm run lint && npm run typecheck && npm test` must pass (plus `npm run validate:theme` if you touched `content/theme.yaml`). These are the same checks CI runs; see `.github/workflows/ci.yml`. If you touched `kube/`, both overlays must render. If you touched the server or export, run it and hit a page.
+**Before calling a change done:** `npm run lint && npm run lint:html && npm run typecheck && npm test` must pass (plus `npm run validate:theme` if you touched `content/theme.yaml`). These are the same checks CI runs; see `.github/workflows/ci.yml`. If you touched `kube/`, both overlays must render. If you touched the server or export, run it and hit a page.
 
 ## Layout
 
@@ -82,7 +83,8 @@ docs/                  RUNBOOK.md (commands/procedures), PROJECT_LOG.md (decisio
 - **Never hard-code values that live in settings.** Links built from settings go in markup as `<a data-site-link="<name>" href="#">`; `renderPage` fills them from `src/site.mts`, and an unknown name fails the render. New settings go in `content/site.yaml` + `parseSite()` + a test.
 - Caching: the export fingerprints every `assets/…` reference in HTML (`?v=<sha256 prefix>`), and `/assets/*` is served `immutable` for a year. Files referenced only from CSS (fonts) aren't fingerprinted, so never modify one in place; add a new filename. The dev server revalidates un-hashed files, so a normal reload shows edits.
 - `public/assets/vendor/` holds third-party code exactly as published. Never edit it; to update or patch, replace the whole library folder (and note the version in Layout above) or override from `css/overrides.css`. First-party code never goes in `vendor/`, and vendored code never goes anywhere else.
-- **Page structure (accessibility):** content between the nav section and the footer lives in `<main id="main">`; keep exactly one `<h1>` per page and never skip heading levels (page title h1 → section headings h2 → card/person names h3). Text that isn't a heading (class years, quips, subtitles) is `<p>`/`<div>`, not `<h5>`/`<h6>`. Section ids that pages link to are readable (`#alumni`); don't reintroduce builder-generated ids in links.
+- **Page structure (accessibility, enforced by `lint:html`):** content between the nav section and the footer lives in `<main id="main">`; keep exactly one `<h1>` per page and never skip heading levels (page title h1 → section headings h2 → card/person names h3). Text that isn't a heading (class years, quips, subtitles) is `<p>`/`<div>`, not `<h5>`/`<h6>`. Section ids that pages link to are readable (`#alumni`); don't reintroduce builder-generated ids in links.
+- **Page renames:** add the old URL (with and without `.html`) to `public/_redirects` so links elsewhere keep working; `tests/redirects.test.mts` checks targets exist.
 - **Member portraits:** `public/assets/images/members/<firstname-lastname>.jpg` (lowercase, hyphens, no nicknames/apostrophes/accents, `-2` for a duplicate name), `alt` = full name. Enforced by `check:images`. The base name is the member's future data ID. A member without a photo yet points at the shared `assets/images/portrait-placeholder.jpg` (never copy it per person; duplicate files fail the check).
 - **Team photos and logos:** `public/assets/images/teams/<team-id>.jpg` (`.png` for logos), `<team-id>` = the team's `id` in `content/theme.yaml` where it has one, otherwise the team name in kebab-case. `alt` = "<Team> team photo" / "<Team> logo". `check:images` enforces the format only; team names change about yearly, so don't add a check that names match `theme.yaml` or team data without a rename procedure (see PROJECT_LOG).
 - **Image classes:** every image is limited by one `image-limits` section in `content/site.yaml`, chosen by folder (`portraits` = `members/`, `team-photos` = `teams/`, `other` = everything else). A new folder with its own rules = a new entry in `IMAGE_CLASSES` (`src/images.mts`) plus a matching section; all sections are required, unknown ones are rejected.

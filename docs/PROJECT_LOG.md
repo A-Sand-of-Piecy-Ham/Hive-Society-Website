@@ -115,6 +115,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-24: HTML validation in CI (`npm run lint:html`, html-validate recommended preset + `heading-level`, all errors). Fixed its findings: native `<footer>` landmark, iframe titles (no deprecated `frameborder`), no `<div>` inside `<button>`/`<h1>` or `<p>` inside `<h3>`, broken `aria-labelledby`/`aria-controls` references, inline styles moved to `overrides.css`. Pages renamed `contactus`→`contact-us`, `mailinglist`→`mailing-list`, with 301s in `public/_redirects`.
 - 2026-09-24: `check:images` reads dimensions with `image-size` instead of our PNG/JPEG/GIF header parser; WebP and AVIF are now measurable too.
 - 2026-09-24: Bootstrap 5.0.1 → 5.3.8 (vendored dist files replaced wholesale). Verified on all pages at 1400/390 px: element geometry identical, only invisible inherited colors on navbar wrappers changed; mobile menu and dropdown work; no console errors.
 - 2026-09-24: Contrast check in CI (`src/contrast.mts` via `validate:theme`, `colorjs.io` for WCAG 2.1 math): 23 text/icon-on-background pairs incl. each team and the translucent nav bar; every theme key must be in a pair; known failures (`links.*`) waived with reasons and printed as warnings.

@@ -68,6 +68,7 @@ The complete list. A test fails if a script in `package.json` isn't in this tabl
 | `npm run export` | Builds the deployable site into `dist/` (see below) | Before a manual deploy; Cloudflare Pages runs it automatically |
 | `npm test` | Runs the automated tests ([§10](#10-tests-and-checks)) | Before every commit |
 | `npm run lint` | Runs ESLint (see below) | Before every commit |
+| `npm run lint:html` | Checks every page's HTML: valid nesting, headings in order (one `<h1>`, no skipped levels), images have `alt`, iframes have titles, landmarks (see below) | After editing a page |
 | `npm run typecheck` | Runs the TypeScript compiler in check-only mode (see below) | Before every commit |
 | `npm run validate:theme` | Checks `content/theme.yaml` follows the color rules, and that every text/icon color is readable on its background (WCAG contrast; known failures print as warnings) | After editing colors |
 | `npm run check:images` | Checks every image is within the size limits, none are duplicates, and member portraits are named correctly ([§6](#6-images)) | After adding or replacing images |
@@ -76,6 +77,7 @@ The complete list. A test fails if a script in `package.json` isn't in this tabl
 **What these checks are for**, if you haven't used them before:
 
 - **Linting (`lint`)** reads the code without running it and flags patterns that are probably bugs or make code harder to maintain. Examples: a promise whose failure is silently ignored, a variable that's never used, a comparison that can never be true. The rules are strict on purpose, because they catch mistakes before anyone clicks through the site. Most style issues can be fixed automatically with `--fix`.
+- **HTML validation (`lint:html`)** does the same for the pages, with [html-validate](https://html-validate.org/): structure and accessibility problems that browsers silently tolerate but screen readers and search engines don't. Config is `.htmlvalidate.json` (the recommended preset, plus heading order). Everything is an error, so fixed problems can't come back. To tolerate a known issue temporarily, set that rule to `"warn"` there with a comment saying why; warnings print but don't fail CI.
 - **Type checking (`typecheck`)** verifies that values are used consistently across files: that a function expecting a number isn't handed text, that a setting that might be missing is handled. Node runs our TypeScript *without* checking types, so this command is the only place type mistakes are caught.
 - **Tests (`test`)** run the code and compare results with what should happen, e.g. "requesting `/members` returns the members page" or "a color written as `purple` is rejected".
 - **The export (`export`)** copies `public/` to `dist/` and prepares it for hosting. It fills in links from `content/site.yaml`, and it adds a short code (a hash of the file's contents) to every stylesheet and image URL, like `style.css?v=3fa9c1…`. When a file changes its URL changes, so visitors never see an outdated copy, and unchanged files can be cached for a year. It also writes `sitemap.xml` and `robots.txt` (for search engines) and `_headers` (caching rules for Cloudflare).
@@ -94,7 +96,7 @@ SITE_URL=https://staging.example.com npm run export # different domain in sitema
 **Before every commit**, run the same checks CI will:
 
 ```bash
-npm run lint && npm run typecheck && npm run validate:theme && npm run check:images && npm test && npm run export
+npm run lint && npm run lint:html && npm run typecheck && npm run validate:theme && npm run check:images && npm test && npm run export
 ```
 
 ## 4. Making a change
@@ -270,6 +272,7 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 | `tests/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
 | `tests/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
 | `tests/contrast.test.mts` | Contrast math (WCAG 2.1 ratios, 4.5:1 text, 3:1 large text and icons, see-through backgrounds), that every theme color is in a checked pair, and that the site's colors pass except for listed waivers (and no waiver is left over once fixed) |
+| `tests/redirects.test.mts` | `public/_redirects` is well-formed, every old URL points at a page that exists, and no redirect hides a page that still exists |
 | `tests/theme.test.mts` | The color rules for `theme.yaml`: real hex values only, no color names or references, correct naming, valid team list |
 | `tests/images.test.mts` | Reading image dimensions, and the image rules: per-folder size limits, every class has limits, exceptions need a reason, no duplicates, no leftover exceptions, member portrait and team photo naming |
 | `tests/site-links.test.mts` | Every link and image on every page points to a file that exists |
@@ -304,6 +307,7 @@ Open the failed check on the PR and read the log; every check prints what's wron
 |---|---|---|
 | **Conventional PR title** | The title doesn't start with an allowed type | Edit the PR title (e.g. `fix: …`). No new commit needed |
 | Lint | ESLint found a likely bug or style problem | Run `npm run lint` locally; `npm run lint -- --fix` fixes most |
+| Validate HTML | A page has invalid or inaccessible markup (e.g. a missing `alt`, a skipped heading level, a `<div>` inside a heading) | Run `npm run lint:html` locally; each message names the file, line, and rule with a link explaining the fix |
 | Typecheck | A value is used inconsistently with its type | Run `npm run typecheck`; the message names the file and line |
 | Validate theme.yaml | A color isn't a hex value, a key is misnamed, or a team entry is malformed | The message names the exact key in `content/theme.yaml` |
 | Check image sizes | An image is too large, duplicated, a member portrait is misnamed, or an exception is stale | Resize or rename ([§6](#6-images)), reuse the existing file, or add/remove an exception |

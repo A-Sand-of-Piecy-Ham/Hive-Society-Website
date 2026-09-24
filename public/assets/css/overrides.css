@@ -110,3 +110,11 @@ section.contacts03 .calendar-subscribe .btn {
    65vh and crop (centered) instead of letting the page open on nothing but photo. On 16:9 screens it
    is already ~62vh, so the cap only engages on ultrawide or short windows. */
 section.header1 .image-wrapper img { max-height: 65vh; object-fit: cover; }
+
+/* Moved out of inline style attributes (html-validate: no-inline-style). */
+/* Specificity (0,4,1) + loading last matches the old inline style: beats the plugin's 50px and the
+   scrolled-state (.navbar-short) 2rem rule; the phone-width rule is !important and still applies. */
+.menu .navbar.navbar-dropdown .navbar-logo img { height: 3rem; }
+.google-map iframe { border: 0; }
+/* The hamburger is a <span> now (a <div> isn't allowed inside <button>); keep it a block box. */
+.navbar-toggler .hamburger { display: block; }

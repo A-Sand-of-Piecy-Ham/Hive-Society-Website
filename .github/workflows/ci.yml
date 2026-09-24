@@ -32,6 +32,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - name: Validate HTML (structure and accessibility)
+        run: npm run lint:html
       - run: npm run typecheck
       - name: Validate theme.yaml
         run: npm run validate:theme
