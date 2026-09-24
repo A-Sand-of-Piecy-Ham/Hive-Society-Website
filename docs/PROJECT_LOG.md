@@ -106,16 +106,16 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] `src/forms.mts` (scraping the Google Form's `FB_PUBLIC_LOAD_DATA_`): the official **Google Forms API** (`googleapis`, `forms.get`) returns question IDs reliably, but needs a service account with access to the form. Scraping needs no credentials; revisit if Google changes the page format.
 - [ ] Calendar links: **calendar-link** generates per-event add-to-calendar links (Google/Outlook/ICS) for the planned calendar page. Subscription links (`calendarLinks`) are simple enough to keep.
 - [ ] Planned work, use a library from the start: ICS parsing → **node-ical**; contrast check → **colorjs.io** (`contrastWCAG21`; `wcag-contrast` is unmaintained since 2022).
-- [ ] Vendored front-end: see Housekeeping → Bootstrap.
 
 ### Housekeeping
-- [ ] **Update `public/assets/vendor/bootstrap/`** (5.0.1, May 2021 → latest 5.3.x): replace both files wholesale from the official dist, update the version in AGENTS.md → Layout, then check nav, dropdown, and grids at phone and desktop widths. 5.x minor releases are backward compatible, but Mobirise CSS may lean on 5.0 defaults. If the Astro migration lands first, install it from npm there (or drop it) instead.
+- [ ] Bootstrap from npm instead of vendored files (decided 2026-09-24: do it in the Astro migration, which installs it natively; Dependabot then updates it, patch/minor only until visual regression tests exist).
 - [ ] **On hold:** create the GitHub remote; enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push). A private repo on GitHub Free can't enforce it: get GitHub Pro (Student Developer Pack) or host under an org on Team.
 - [ ] Set the real GHCR owner in `kube/overlays/prod/kustomization.yaml`.
 - [ ] Private repo ⇒ private GHCR images: add `imagePullSecrets: [{name: ghcr-pull}]` to the prod overlay (patch) and create the secret (see docs/CONTAINERIZATION.md).
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-24: Bootstrap 5.0.1 → 5.3.8 (vendored dist files replaced wholesale). Verified on all pages at 1400/390 px: element geometry identical, only invisible inherited colors on navbar wrappers changed; mobile menu and dropdown work; no console errors.
 - 2026-09-24: Contrast check in CI (`src/contrast.mts` via `validate:theme`, `colorjs.io` for WCAG 2.1 math): 23 text/icon-on-background pairs incl. each team and the translucent nav bar; every theme key must be in a pair; known failures (`links.*`) waived with reasons and printed as warnings.
 - 2026-09-24: Homepage hero capped at 65vh with `object-fit: cover` (the top-of-photo crop was done 2026-09-23).
 - 2026-09-24: Accessibility: `<main id="main">` landmark and a "Skip to content" link on every page, footer marked `role="contentinfo"`; one `<h1>` per page with no skipped heading levels (members/teams had 6 and 9 `<h1>`s; calendar, contact, mailing list had none); non-heading subtitles and class years are no longer headings; readable section anchors (`members.html#alumni`, `#executive-board`, `#active-members`, `teams.html#core-teams`, …) replace generated `article11-*` ids. Layout verified element-by-element identical at 1400 and 390 px.
