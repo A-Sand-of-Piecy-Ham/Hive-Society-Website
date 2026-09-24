@@ -101,9 +101,14 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Private repo on GitHub Free can't enforce branch protection: get GitHub Pro (Student Developer Pack) or host under an org on Team.
 - [ ] On creating the GitHub remote: enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push).
 - [ ] Set the real GHCR owner in `kube/overlays/prod/kustomization.yaml`.
+- [ ] Private repo ⇒ private GHCR images: add `imagePullSecrets: [{name: ghcr-pull}]` to the prod overlay (patch) and create the secret (see docs/CONTAINERIZATION.md).
+- [ ] CMS config: mirror validator rules as field `pattern`s (hex colors, kebab ids) so editors see errors before saving; CI still enforces.
+- [ ] Scheduled rebuilds: create a Pages deploy hook, store as `PAGES_DEPLOY_HOOK` secret, add a daily GitHub Actions cron that POSTs to it (needed once the calendar is built from the ICS).
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-23: Image check in CI (`npm run check:images`, `src/images.mts`): 1200 px / 300 KB limits, exceptions with reasons in `content/site.yaml → images`, duplicate detection, stale-exception detection. Hero and social-preview listed as exceptions.
+- 2026-09-23: RUNBOOK rewritten for a basic-developer audience (what lint/typecheck/tests/export do and why; how the pieces fit; versions & releases with every PR-title type and examples; images; roster changes & override; CI explained). Containers/Kubernetes/GHCR/Tunnel moved to optional `docs/CONTAINERIZATION.md` with rationale. Docs test also enforces PR-title types.
 - 2026-09-23: RUNBOOK §6 "Tests and checks": every test file (what it guarantees, case count), every CI job (runs / when / blocks merging), coverage gaps. Docs test now also requires each test file to be listed.
 - 2026-09-23: RUNBOOK dependency tables (required: Node 24, git; optional by task: Docker, kubectl, k3d, ImageMagick, kustomize, kubeconform, gh). Local k3d flow verified end to end (Traefik ingress at hive.localhost:8081, read-only pod as UID 1000, rollout restart).
 - 2026-09-23: `docs/RUNBOOK.md`: setup, all npm scripts with options, change workflow, deploys (Pages, container, k3d, prod k3s), one-time GitHub/Cloudflare/Google setup, CI-failure guide, maintenance calendar, troubleshooting. `test/docs.test.mts` fails if an npm script is undocumented. README/AGENTS point to it.

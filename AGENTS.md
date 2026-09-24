@@ -6,7 +6,7 @@ Guidance for AI coding agents working in this repo. Humans: see [README.md](READ
 > **Keep this file current.** If your change makes anything here wrong or incomplete (commands, layout, conventions, decisions), update this file in the same change. A stale AGENTS.md misleads every later agent.
 > Also keep in sync, in the same change:
 > - [docs/PROJECT_LOG.md](docs/PROJECT_LOG.md): tick TODOs you finish (move them to **Done** with the date), add TODOs you defer, record decisions.
-> - [docs/RUNBOOK.md](docs/RUNBOOK.md), the maintainer runbook: new or changed npm scripts, commands, deploy steps, setup, tests, CI checks. A test fails if an npm script or test file isn't in its tables; keep each test file's row (what it guarantees, case count) accurate when you add or change tests.
+> - [docs/RUNBOOK.md](docs/RUNBOOK.md), the maintainer runbook (audience: a basic developer; explain *why* a step exists, not just the command): npm scripts, commands, deploys, setup, versions, tests, CI. A test fails if an npm script, test file, or PR-title type isn't in its tables; keep each test file's "what it guarantees" accurate. Container/Kubernetes material goes in [docs/CONTAINERIZATION.md](docs/CONTAINERIZATION.md), never the main runbook.
 > - [EDITING.md](EDITING.md), the non-coder guide: whenever what's editable, or how, changes. It's the only doc editors read.
 >   **Readers of EDITING.md do not like reading; content must be brief and avoid technical jargon. Assume website editors are lazy.**
 >   Short bullets, plain words, no "CMS", "repo", "PR", "cache", file paths, or explanations of how things work. Only what to do, what not to do, and who to ask. If a line doesn't change what an editor does, cut it.
@@ -27,6 +27,7 @@ Website for Hive Society Improv (UIUC), https://hivesocietyimprov.com. Today it'
 | Lint | `npm run lint` |
 | Type check | `npm run typecheck` |
 | Render k8s manifests | `kubectl kustomize kube/overlays/local` (or `prod`) |
+| Image limits check | `npm run check:images` |
 | Live Google Form check | `npm run check:form` (network) |
 
 Full reference with options, deploys, and setup: [docs/RUNBOOK.md](docs/RUNBOOK.md).
@@ -46,6 +47,8 @@ src/app.mts            static site handler: createSiteServer(), resolveFile() (P
 src/server.mts         entry point: env config, listen, SIGTERM
 src/theme.mts          theme.yaml loading, validation, CSS-variable flattening
 src/site.mts           site.yaml loading/validation; named links (calendar-google, calendar-webcal, calendar-ics)
+src/images.mts         image policy (site.yaml → images): size limits, exceptions, duplicates
+src/forms.mts          Google Form structure parser + drift comparison
 src/render.mts         shared HTML transform (server + export): fills data-site-link hrefs; export adds ?v=<hash>
 scripts/export.mts     public/ → dist/ + robots.txt, sitemap.xml, _headers
 scripts/validate-theme.mts   CLI used by CI
@@ -74,7 +77,7 @@ docs/                  RUNBOOK.md (commands/procedures), PROJECT_LOG.md (decisio
 - `public/` is vendored Mobirise output. Don't reformat it wholesale. Make targeted edits only; it's being replaced by templates. Put layout fixes in `public/assets/site/overrides.css`, targeting block-type classes (`footer3`, `contacts01`) rather than `cid-*` hashes.
 - **Never hard-code values that live in settings.** Links built from settings go in markup as `<a data-site-link="<name>" href="#">`; `renderPage` fills them from `src/site.mts`, and an unknown name fails the render. New settings go in `content/site.yaml` + `parseSite()` + a test.
 - Caching: the export fingerprints every `assets/…` reference in HTML (`?v=<sha256 prefix>`), and `/assets/*` is served `immutable` for a year. Files referenced only from CSS (fonts) aren't fingerprinted, so never modify one in place; add a new filename. The dev server revalidates un-hashed files, so a normal reload shows edits.
-- **Images committed to the repo:** JPEG, at most 1200 px on the long edge (1920 px for full-width heroes), quality ~82, progressive, metadata stripped. Use PNG only for logos or images that need transparency. Git history keeps every version of a file forever, so optimize *before* committing. Example: `convert in.png -auto-orient -resize '1200x1200>' -strip -quality 82 -interlace JPEG out.jpg`. Don't commit duplicate files; reference one shared file instead (e.g. every page's `og:image` is `assets/images/social-preview.png`, as an absolute URL).
+- **Images committed to the repo:** enforced by `npm run check:images` (limits and exceptions in `content/site.yaml` → `images`). JPEG, at most 1200 px on the long edge, quality ~82, progressive, metadata stripped; larger only via an exception with a reason. Use PNG only for logos or images that need transparency. Git history keeps every version of a file forever, so optimize *before* committing. Example: `convert in.png -auto-orient -resize '1200x1200>' -strip -quality 82 -interlace JPEG out.jpg`. Don't commit duplicate files; reference one shared file instead (e.g. every page's `og:image` is `assets/images/social-preview.png`, as an absolute URL).
 
 ### Commits, PRs, and versioning
 `main` is branch-protected: **all changes go through a PR on a branch**, required CI checks must pass before merge, and PRs are squash-merged. Never commit or push to `main` directly, and never bypass or weaken protection or required checks to get a change in. If a check is wrong, fix the check in its own PR.

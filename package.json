@@ -15,7 +15,8 @@
     "typecheck": "tsc -p .",
     "test": "node --test",
     "validate:theme": "node scripts/validate-theme.mts",
-    "check:form": "node scripts/check-form.mts"
+    "check:form": "node scripts/check-form.mts",
+    "check:images": "node scripts/check-images.mts"
   },
   "dependencies": {
     "yaml": "^2.9.1"

@@ -35,6 +35,8 @@ jobs:
       - run: npm run typecheck
       - name: Validate theme.yaml
         run: npm run validate:theme
+      - name: Check image sizes
+        run: npm run check:images
       - run: npm test
       - name: Static export
         run: npm run export

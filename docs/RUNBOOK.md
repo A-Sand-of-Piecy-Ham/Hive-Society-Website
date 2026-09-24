@@ -1,10 +1,11 @@
 # Runbook
 
-Every command and procedure needed to develop, check, deploy, and maintain the site. Written so a new maintainer can take over with nothing but this file.
+Everything needed to develop, check, deploy, and maintain the site, written so someone with basic web-development experience can take over with nothing but this file.
 
-Not a developer? You want [EDITING.md](../EDITING.md) instead.
+- Not a developer? You want [EDITING.md](../EDITING.md).
+- Containers, Docker, Kubernetes: **optional**, and kept separately in [CONTAINERIZATION.md](CONTAINERIZATION.md). The live site doesn't need any of it.
 
-**Contents:** [Setup](#1-setup) · [npm scripts](#2-npm-scripts) · [Making a change](#3-making-a-change) · [Deploying](#4-deploying) · [One-time project setup](#5-one-time-project-setup) · [Tests and checks](#6-tests-and-checks) · [When CI fails](#7-when-ci-fails) · [Routine maintenance](#8-routine-maintenance) · [Troubleshooting](#9-troubleshooting)
+**Contents:** [1 Setup](#1-setup) · [2 How it fits together](#2-how-it-fits-together) · [3 npm scripts](#3-npm-scripts) · [4 Making a change](#4-making-a-change) · [5 Versions and releases](#5-versions-and-releases) · [6 Images](#6-images) · [7 Deploying](#7-deploying) · [8 One-time project setup](#8-one-time-project-setup) · [9 Roster changes](#9-roster-changes) · [10 Tests and checks](#10-tests-and-checks) · [11 When CI fails](#11-when-ci-fails) · [12 Routine maintenance](#12-routine-maintenance) · [13 Troubleshooting](#13-troubleshooting)
 
 ---
 
@@ -12,249 +13,294 @@ Not a developer? You want [EDITING.md](../EDITING.md) instead.
 
 ### Dependencies
 
-**Required**: everything in [§2](#2-npm-scripts) and [§3](#3-making-a-change) needs only these:
+**Required** for everything in this runbook:
 
 | Tool | Version | Install | Check |
 |---|---|---|---|
 | Node.js (includes npm) | 24+ | [nvm](https://github.com/nvm-sh/nvm): `nvm install 24` | `node --version` |
 | git | any recent | [git-scm.com](https://git-scm.com/downloads) | `git --version` |
 
-**Optional**: only for the task listed. Skip any you don't need.
+**Optional**, only for the task listed:
 
 | Tool | Needed for | Install | Check |
 |---|---|---|---|
-| Docker | Building/running the container image; required by k3d | [Docker Desktop](https://docs.docker.com/desktop/) (macOS/Windows, incl. WSL2) or [Docker Engine](https://docs.docker.com/engine/install/) (Linux) | `docker --version` |
-| kubectl | Any Kubernetes work (render, apply, logs) | [kubernetes.io/docs/tasks/tools](https://kubernetes.io/docs/tasks/tools/) · `brew install kubectl` | `kubectl version --client` |
-| k3d | Running the site in a local Kubernetes cluster | `curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh \| bash` · `brew install k3d` | `k3d version` |
-| ImageMagick | Resizing images before committing ([§3](#3-making-a-change)) | `sudo apt install imagemagick` · `brew install imagemagick` | `convert -version` (v7: `magick -version`) |
-| kustomize | Only for `kustomize edit set image` when releasing to production; rendering uses kubectl | [kubectl.docs.kubernetes.io/installation/kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/) · `brew install kustomize` | `kustomize version` |
-| kubeconform | Validating manifests locally (CI already does it) | [github.com/yannh/kubeconform](https://github.com/yannh/kubeconform#installation) · `brew install kubeconform` | `kubeconform -v` |
-| GitHub CLI (`gh`) | Opening PRs / checking CI from the terminal (the website works just as well) | [cli.github.com](https://cli.github.com/) · `brew install gh` | `gh --version` |
+| ImageMagick | Resizing photos before adding them ([§6](#6-images)) | `sudo apt install imagemagick` · `brew install imagemagick` | `convert -version` (v7: `magick -version`) |
+| GitHub CLI (`gh`) | Opening PRs / checking CI from the terminal; the GitHub website does the same | [cli.github.com](https://cli.github.com/) · `brew install gh` | `gh --version` |
 
-`wrangler` (Cloudflare deploys) needs no install: it runs through `npx`.
-
-Tested with Node 24.21, Docker 29.0, kubectl 1.34, k3d 5.9, ImageMagick 6.9. ImageMagick 7 renamed `convert` to `magick`; substitute it in the commands below.
+Container tools (Docker, kubectl, k3d, …) are listed in [CONTAINERIZATION.md](CONTAINERIZATION.md#tools).
 
 ### Get the site running
 
 ```bash
 git clone <repo-url> hive_site && cd hive_site
-npm ci          # exact versions from package-lock.json; use this, not `npm install`, unless changing dependencies
+npm ci          # installs the exact dependency versions recorded in package-lock.json
 npm start       # → http://localhost:8080
 ```
 
-There's no build step: Node runs the TypeScript (`.mts`) files directly.
+Use `npm ci`, not `npm install`, unless you're deliberately adding or upgrading a dependency: `npm install` can silently change `package-lock.json`.
 
-## 2. npm scripts
+There's no build step for development. The code is TypeScript (`.mts` files), and Node 24 runs it directly by ignoring the type annotations. That's why type checking is a separate command ([§3](#3-npm-scripts)).
 
-This table is the complete list. A test fails if a script in `package.json` isn't documented here.
+## 2. How it fits together
+
+```
+content/*.yaml ──┐
+public/ (pages) ─┼─► npm start           → local preview, http://localhost:8080
+                 └─► npm run export → dist/ → Cloudflare Pages → hivesocietyimprov.com
+```
+
+- **`public/`**: the site's pages, images, and styles. (Being replaced by the Astro version; see the README.)
+- **`content/theme.yaml`**: every color on the site. **`content/site.yaml`**: settings that pages read (calendar, mailing-list form, image limits).
+- **`src/`**: the small Node server behind `npm start`, and the code that reads the YAML files.
+- **`scripts/`**: the export and the checks that CI runs.
+- **`test/`**: automated tests ([§10](#10-tests-and-checks)).
+- **GitHub Actions** (CI) runs the checks on every change; **Cloudflare Pages** builds and hosts the live site from GitHub.
+
+## 3. npm scripts
+
+The complete list. A test fails if a script in `package.json` isn't in this table.
 
 | Command | What it does | When to use it |
 |---|---|---|
-| `npm start` | Serves `public/` at http://localhost:8080. Pages are rendered on each request (links filled from `content/site.yaml`), and files are never served stale | Day-to-day development |
-| `npm run start:dist` | Serves the exported `dist/` instead of `public/` | Previewing exactly what will be deployed (run `npm run export` first) |
-| `npm run export` | Builds the deployable static site into `dist/`: renders pages, fingerprints assets (`?v=<hash>`), writes `robots.txt`, `sitemap.xml`, `_headers` | Before a manual deploy; Cloudflare Pages runs it automatically |
-| `npm test` | Runs every test in `test/`: server behavior, theme rules, site settings, form parsing, and a check that every link and image on every page exists | Before every commit (CI runs it too) |
-| `npm run lint` | ESLint with strict type-aware rules | Before every commit |
-| `npm run typecheck` | TypeScript type check (no output files) | Before every commit |
-| `npm run validate:theme` | Checks `content/theme.yaml`: hex colors, naming, team list shape | After editing colors |
-| `npm run check:form` | Compares the live Google Form (mailing list) with the question IDs in `content/site.yaml`. Needs internet | After changing the Google Form, or when the daily check fails |
+| `npm start` | Runs the site locally at http://localhost:8080. Pages are rebuilt on every request, so edits show on reload | Day-to-day development |
+| `npm run start:dist` | Serves the exported `dist/` folder instead, exactly as it will be deployed | Final check before a manual deploy (run `npm run export` first) |
+| `npm run export` | Builds the deployable site into `dist/` (see below) | Before a manual deploy; Cloudflare Pages runs it automatically |
+| `npm test` | Runs the automated tests ([§10](#10-tests-and-checks)) | Before every commit |
+| `npm run lint` | Runs ESLint (see below) | Before every commit |
+| `npm run typecheck` | Runs the TypeScript compiler in check-only mode (see below) | Before every commit |
+| `npm run validate:theme` | Checks `content/theme.yaml` follows the color rules | After editing colors |
+| `npm run check:images` | Checks every image is within the size limits and none are duplicates ([§6](#6-images)) | After adding or replacing images |
+| `npm run check:form` | Compares the live Google Form (mailing list) with the settings in `content/site.yaml`. Needs internet | After anyone edits the Google Form, or when the daily check fails |
 
-Options and variants:
+**What these checks are for**, if you haven't used them before:
+
+- **Linting (`lint`)** reads the code without running it and flags patterns that are probably bugs or make code harder to maintain. Examples: a promise whose failure is silently ignored, a variable that's never used, a comparison that can never be true. The rules are strict on purpose, because they catch mistakes before anyone clicks through the site. Most style issues can be fixed automatically with `--fix`.
+- **Type checking (`typecheck`)** verifies that values are used consistently across files: that a function expecting a number isn't handed text, that a setting that might be missing is handled. Node runs our TypeScript *without* checking types, so this command is the only place type mistakes are caught.
+- **Tests (`test`)** run the code and compare results with what should happen, e.g. "requesting `/members` returns the members page" or "a color written as `purple` is rejected".
+- **The export (`export`)** copies `public/` to `dist/` and prepares it for hosting. It fills in links from `content/site.yaml`, and it adds a short code (a hash of the file's contents) to every stylesheet and image URL, like `style.css?v=3fa9c1…`. When a file changes its URL changes, so visitors never see an outdated copy, and unchanged files can be cached for a year. It also writes `sitemap.xml` and `robots.txt` (for search engines) and `_headers` (caching rules for Cloudflare).
+
+Useful variations:
 
 ```bash
-npm run lint -- --fix                              # auto-fix what ESLint can
-npm run validate:theme -- path/to/other-theme.yaml # validate a different file
-node --test test/theme.test.mts                    # run one test file
-node --test --test-name-pattern='health' test/app.test.mts   # run tests whose name matches
-PORT=3000 npm start                                # different port (also: HOST, STATIC_DIR)
-SITE_URL=https://staging.example.com npm run export          # canonical URL for sitemap/robots
+npm run lint -- --fix                               # let ESLint fix what it can
+npm run validate:theme -- path/to/other-theme.yaml  # check a different file
+node --test test/theme.test.mts                     # run one test file
+node --test --test-name-pattern='health' test/app.test.mts   # run only tests whose name matches
+PORT=3000 npm start                                 # use another port
+SITE_URL=https://staging.example.com npm run export # different domain in sitemap/robots
 ```
 
-**The pre-commit check** (exactly what CI's main job runs):
+**Before every commit**, run the same checks CI will:
 
 ```bash
-npm run lint && npm run typecheck && npm run validate:theme && npm test && npm run export
+npm run lint && npm run typecheck && npm run validate:theme && npm run check:images && npm test && npm run export
 ```
 
-## 3. Making a change
+## 4. Making a change
 
-`main` is protected. Every change goes through a pull request.
+`main` is the live version and is protected: nothing is committed to it directly. Every change goes on its own branch and through a **pull request (PR)** on GitHub, where CI runs the checks and someone reviews it.
 
 ```bash
-git switch main && git pull
+git switch main && git pull                          # start from the latest version
 git switch -c <github-user>/<short-description>      # e.g. alex/fix-footer-spacing
-# …edit, then run the pre-commit check above…
+# …make changes, run the pre-commit checks above…
 git add -A && git commit -m "fix: tighten footer spacing on mobile"
-git push -u origin HEAD                               # then open a PR on GitHub
+git push -u origin HEAD                              # then open a PR on GitHub
 ```
 
-- **PR title = the release note and the version bump.** It must start with an allowed type (`content:`, `theme:`, `fix:`, `feat:`, …). The rules are in [README → Versioning](../README.md#versioning). CI rejects any other title.
-- PRs are **squash-merged** once all required checks pass.
-- Changed a convention, command, or layout? Update [AGENTS.md](../AGENTS.md), this runbook, and [PROJECT_LOG.md](PROJECT_LOG.md) in the same PR. Changed what editors can do? Update [EDITING.md](../EDITING.md).
+- **The PR title matters.** It must start with a type like `fix:` or `content:` ([§5](#5-versions-and-releases)), and it decides the next version number. CI rejects other titles.
+- PRs are **squash-merged**: all the branch's commits become one commit on `main`, titled with the PR title.
+- If you changed a command, convention, or folder layout, update this runbook, [AGENTS.md](../AGENTS.md), and [PROJECT_LOG.md](PROJECT_LOG.md) in the same PR. If you changed what editors can do, update [EDITING.md](../EDITING.md).
 
-**Adding images:** resize before committing (git keeps every version forever):
+## 5. Versions and releases
+
+The site has a version number like **`1.4.2`**, following [Semantic Versioning](https://semver.org/): **MAJOR.MINOR.PATCH**. Nobody edits it by hand. It goes up automatically based on the **type** at the start of each PR title (the [Conventional Commits](https://www.conventionalcommits.org/) format).
+
+| PR title starts with | Use it for | Example title | Version change |
+|---|---|---|---|
+| `content:` | Text, photos, members, teams, shows | `content: add fall 2026 NewBee team` | patch `1.4.2 → 1.4.3` |
+| `theme:` | Changing existing color values in `theme.yaml` | `theme: darken button hover color` | patch |
+| `fix:` | Fixing something broken | `fix: calendar link opens wrong calendar` | patch |
+| `perf:` | Making the site faster without changing what it does | `perf: lazy-load member photos` | patch |
+| `refactor:` | Restructuring code without intended behavior change | `refactor: split page rendering into modules` | patch |
+| `build:` | The export, Dockerfile, or other build setup | `build: update container base image` | patch |
+| `deps:` | Updating dependencies (Dependabot uses this) | `deps: bump yaml to 2.10.0` | patch |
+| `revert:` | Undoing an earlier change | `revert: "theme: darken button hover color"` | patch |
+| `feat:` | Something new: page, component, CMS section, new color key or content field | `feat: add alumni filter to members page` | minor `1.4.3 → 1.5.0` |
+| `test:` | Only tests | `test: cover calendar link escaping` | none |
+| `ci:` | Only CI workflows | `ci: run image check on pull requests` | none |
+| `docs:` | Only documentation | `docs: explain release types` | none |
+| `style:` | Only code formatting (not visual style; that's `theme:` or `fix:`) | `style: reformat server module` | none |
+| `chore:` | Repo housekeeping that doesn't affect the site | `chore: update .gitignore` | none |
+
+**Major** (`1.5.0 → 2.0.0`) = a **breaking change**: something others rely on stops working as before. Here that means a color key or content field is renamed or removed (editors' files and the CMS break), page URLs change (links and search results break), or a deploy needs manual steps. Mark it with `!` after the type (`feat!: rename footer color keys`) or add a line `BREAKING CHANGE: <what breaks>` to the PR description. A big rewrite that keeps all of those working is **not** major.
+
+The rule of thumb: **if a change could make the live site behave or look different, even by accident, it gets at least a patch**, so any problem can be traced to the release that introduced it. Tests, CI, docs, and formatting can't, so they don't release.
+
+**Releases** *(automation planned; see [PROJECT_LOG.md](PROJECT_LOG.md))*: a bot (release-please) keeps a "Release v1.5.0" PR open that collects merged changes into a changelog. Merging that PR creates the git tag `v1.5.0` and a GitHub Release with the notes, and publishes the matching container image. Until then there are no version tags.
+
+## 6. Images
+
+**CI rejects oversized images.** Limits live in `content/site.yaml` under `images:`:
+
+- Max **1200 px** on the longest side.
+- Max **300 KB** per file.
+- No two identical files (reuse the existing one instead).
+
+Phone photos are around 4000 px and 3–5 MB, so **resize before adding**:
 
 ```bash
-convert in.png -auto-orient -resize '1200x1200>' -strip -quality 82 -interlace JPEG out.jpg   # ImageMagick
+convert photo.jpg -auto-orient -resize '1200x1200>' -strip -quality 82 -interlace JPEG photo-small.jpg
+npm run check:images
 ```
 
-Max 1200 px on the long edge (1920 px for full-width heroes). Use JPEG except for logos/transparency. Never commit the same image twice under different names.
+(`-auto-orient` keeps rotation right, `-strip` removes camera metadata such as location, `-quality 82` is visually lossless for photos. ImageMagick 7: use `magick` instead of `convert`.)
 
-## 4. Deploying
+Use JPEG for photos, PNG only for logos or anything that needs transparency.
 
-### Cloudflare Pages (current production)
+**Exceptions** (when an image genuinely needs to be bigger, like a full-width banner): add it under `images: exceptions:` in `content/site.yaml` with a reason:
 
-**Automatic (preferred):** once the Pages project is connected to the GitHub repo ([§5](#5-one-time-project-setup)), every merge to `main` deploys production and every PR gets a preview URL. Nothing to run.
+```yaml
+images:
+  exceptions:
+    new-banner.jpg: Full-width banner on the About page; 1920 px needed on large screens
+```
 
-**Manual** (emergencies, or before the Git connection exists):
+Keep the list short: every exception is a file every visitor downloads. The check fails if an exception names a file that no longer exists.
+
+Why it's strict: git keeps every version of every file forever, so one 5 MB photo makes every future clone of the repository 5 MB bigger, even after it's replaced.
+
+## 7. Deploying
+
+### Cloudflare Pages (the live site)
+
+Cloudflare Pages **pulls directly from GitHub** through Cloudflare's GitHub app ([setup](#8-one-time-project-setup)):
+
+- Every merge to `main` builds (`npm run export`) and deploys the live site automatically.
+- Every PR gets its own **preview URL**, updated with each push, so changes can be checked before merging.
+
+Nothing to run by hand. **Manual deploy** (only if the automatic one is broken, or before it's set up):
 
 ```bash
 npm ci && npm run export
-npx wrangler login                                   # first time only; opens a browser
+npx wrangler login                     # first time only; opens a browser to log in to Cloudflare
 npx wrangler pages deploy dist --project-name=<pages-project-name> --branch=main
 ```
 
-### Container image
+`wrangler` is Cloudflare's command-line tool; `npx` downloads and runs it, so there's nothing to install.
 
-Needs Docker ([§1](#dependencies)).
+### Scheduled rebuilds *(planned)*
 
-```bash
-docker build -t hive-site:dev .                      # multi-stage: runs the export, serves dist/
-docker run --rm --read-only --user 1000 -p 8080:8080 hive-site:dev   # same constraints as the Kubernetes pod
-```
+The calendar page will be built from the shows Google Calendar when the site is exported. To pick up new shows without anyone merging a PR, a **daily GitHub Actions job** will call the Pages project's **deploy hook** (a secret URL that triggers a rebuild). Cloudflare runs the build; GitHub only triggers it.
 
-Publishing to GitHub Container Registry (manual until release automation exists):
+## 8. One-time project setup
 
-```bash
-echo "$GITHUB_TOKEN" | docker login ghcr.io -u <github-user> --password-stdin   # token needs write:packages
-docker build -t ghcr.io/<owner>/hive-site:<version> .
-docker push ghcr.io/<owner>/hive-site:<version>
-```
-
-### Kubernetes: local (k3d)
-
-Needs Docker, kubectl, and k3d ([§1](#dependencies)). Verified end to end on 2026-09-23.
-
-```bash
-k3d cluster create hive -p "8081:80@loadbalancer"    # one time; Traefik is included
-docker build -t hive-site:dev . && k3d image import hive-site:dev -c hive
-kubectl apply -k kube/overlays/local                 # → http://hive.localhost:8081
-kubectl -n hive get pods                             # check it's running
-k3d cluster delete hive                              # tear down
-```
-
-After a code change, rebuild, re-import, then `kubectl -n hive rollout restart deploy/hive-site`.
-
-### Kubernetes: production (k3s + Cloudflare Tunnel)
-
-Needs kubectl with access to the production cluster ([§1](#dependencies)); kustomize only if you use `kustomize edit`.
-
-One time (see [§5](#5-one-time-project-setup) for creating the tunnel):
-
-```bash
-kubectl create namespace hive
-kubectl -n hive create secret generic cloudflared-token --from-literal=token=<tunnel-token>
-```
-
-Each release:
-
-```bash
-# Set the image tag in kube/overlays/prod/kustomization.yaml (images → newTag), or with the kustomize CLI:
-#   (cd kube/overlays/prod && kustomize edit set image hive-site=ghcr.io/<owner>/hive-site:<version>)
-kubectl kustomize kube/overlays/prod | less          # review what will be applied
-kubectl apply -k kube/overlays/prod
-kubectl -n hive rollout status deploy/hive-site      # waits until healthy
-kubectl -n hive logs deploy/hive-site                # if something's wrong
-kubectl -n hive rollout undo deploy/hive-site        # roll back to the previous version
-```
-
-## 5. One-time project setup
-
-Do these once, when setting the project up or moving it to a new owner. Tick them off in [PROJECT_LOG.md](PROJECT_LOG.md).
+Done once when the project is set up or handed to new owners. Tick each off in [PROJECT_LOG.md](PROJECT_LOG.md).
 
 **GitHub**
-1. Create the repository as **private**, then push `main`.
-2. **Branch protection:** Settings → Rules → Rulesets → new branch ruleset for `main`: require a pull request, require these status checks: **Lint, typecheck, test**, **Kubernetes manifests**, **Container image**, **Conventional PR title**. Also block force pushes, and allow **squash merge** only (Settings → General). Private repos need GitHub Pro/Team for this to be enforced (free via the GitHub Student Developer Pack).
-3. **Officers for roster overrides:** Settings → Secrets and variables → Actions → Variables → `ROSTER_OFFICERS` = comma-separated GitHub usernames. *(Used once the roster check exists.)*
-4. **Log retention:** Settings → Actions → General → Artifact and log retention, e.g. 30 days. Roster-override approvals live only in these logs.
-5. Dependabot runs from `.github/dependabot.yml` automatically. Enable alerts under Settings → Code security.
+1. Create the repository as **private** and push `main`.
+2. **Protect `main`:** Settings → Rules → Rulesets → New branch ruleset targeting `main`:
+   - require a pull request before merging;
+   - require status checks: **Lint, typecheck, test**, **Kubernetes manifests**, **Container image**, **Conventional PR title** (names must match exactly);
+   - block force pushes.
+
+   Then Settings → General → Pull Requests: allow **squash merging** only. On a *private* repo this needs GitHub Pro or Team; students get Pro free with the [GitHub Student Developer Pack](https://education.github.com/pack).
+3. **Roster officers:** Settings → Secrets and variables → Actions → Variables → new variable `ROSTER_OFFICERS` = comma-separated GitHub usernames of officers allowed to approve roster overrides (e.g. for removing someone from the roster without marking them as alumni, or when someone is kicked out of Hive). See [§9](#9-roster-changes).
+4. **Log retention:** Settings → Actions → General → artifact and log retention, e.g. 30 days. Roster-override approvals exist only in these logs.
+5. **Dependabot** runs automatically from `.github/dependabot.yml`. Turn on alerts under Settings → Code security.
 
 **Cloudflare Pages**
-1. Workers & Pages → Create → Pages → Connect to Git → pick the repo.
-2. Build command `npm run export`, output directory `dist`, environment variable `NODE_VERSION` = `24`.
-3. Custom domains → `hivesocietyimprov.com` (and `www`).
+1. Cloudflare dashboard → Workers & Pages → Create → Pages → **Connect to Git** → install Cloudflare's GitHub app and grant it this repository → select it.
+2. Build command `npm run export`, build output directory `dist`, environment variable `NODE_VERSION` = `24`.
+3. Custom domains → add `hivesocietyimprov.com` and `www.hivesocietyimprov.com`.
+4. *(For the planned scheduled rebuilds)* Settings → Builds → Deploy hooks → create one for `main`, and store its URL as a GitHub Actions secret.
 
-**Cloudflare Tunnel** (only for the Kubernetes deployment)
-1. Zero Trust → Networks → Tunnels → Create (cloudflared). Copy the token into the Kubernetes secret above.
-2. Public hostnames: `hivesocietyimprov.com` and `www.hivesocietyimprov.com` → `http://traefik.kube-system.svc.cluster.local:80`.
+**Google** (Hive Google account)
+- The **"Hive Shows - Website Calendar"** must stay **public**; its ID is in `content/site.yaml`.
+- The mailing-list **Google Form**'s question IDs are in `content/site.yaml`; confirm with `npm run check:form`.
 
-**Google** (in the Hive Google account)
-- The shows calendar ("Hive Shows - Website Calendar") must be **public**; its ID goes in `content/site.yaml`.
-- The mailing-list Google Form's question IDs go in `content/site.yaml`; verify with `npm run check:form`.
+## 9. Roster changes
 
-## 6. Tests and checks
+*(The roster check is planned; it needs members stored as data, part of the Astro migration.)*
+
+**The rule:** when someone leaves the active roster, they move to **Alumni**, even if they quit rather than graduated. A CI check will block any PR that removes someone from the roster without adding them to Alumni.
+
+**The override** covers removing someone from the roster without marking them as alumni, for example when someone is kicked out of Hive. An officer approves the PR instead of the check:
+
+1. On GitHub: **Actions** → **Approve roster removal** → **Run workflow**.
+2. Enter the PR number and run it.
+
+The action checks the person running it is listed in `ROSTER_OFFICERS` ([§8](#8-one-time-project-setup)), then marks the roster check as passed for that exact version of the PR. If anyone pushes more changes, the approval no longer applies and must be repeated.
+
+**What's recorded:** no label, tag, file, or note in the PR. The only trace is the Action's run log, which GitHub deletes after the retention period. The person's removal is visible in git history like any other edit, and they simply don't appear on the next version of the site.
+
+## 10. Tests and checks
 
 ### Test suites (`npm test`)
 
-All tests use Node's built-in runner (`node:test`). They're offline and take under a second. The table must list every file in `test/`; a test enforces it.
+Written with Node's built-in test runner (`node:test`, no extra framework). All offline, under a second. This table must list every file in `test/`; a test enforces it.
 
-| File | Suites | What it guarantees | Cases |
+| File | What it guarantees |
+|---|---|
+| `test/app.test.mts` | The local server: pages load at `/` and without `.html`; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; missing pages give 404; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
+| `test/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs |
+| `test/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
+| `test/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
+| `test/theme.test.mts` | The color rules for `theme.yaml`: real hex values only, no color names or references, correct naming, valid team list |
+| `test/images.test.mts` | Reading image dimensions, and the image rules: size limits, exceptions need a reason, no duplicates, no leftover exceptions |
+| `test/site-links.test.mts` | Every link and image on every page points to a file that exists |
+| `test/docs.test.mts` | This runbook lists every npm script, every test file, and every allowed PR-title type |
+
+### What CI runs (automatic testing)
+
+**CI** (continuous integration) means GitHub runs these checks automatically on every PR, so problems are caught before they reach the live site. The ones marked "Blocks merging" must pass before a PR can be merged.
+
+| Check (as shown on the PR) | What it does | When | Blocks merging? |
 |---|---|---|---|
-| `test/app.test.mts` | site server | Pages served at `/` and without `.html`; un-fingerprinted assets revalidate (`304` when unchanged); `?v=` assets cached for a year; named links rendered from `site.yaml`; `/healthz`; `404` for missing files, path traversal (incl. encoded), and malformed URLs; `405` for non-GET/HEAD; `HEAD` has no body | 11 |
-| `test/render.test.mts` | renderPage: named links / asset fingerprints | Link targets filled and escaped, idempotent; unknown names (incl. `constructor`) fail the render; `?v=` added or replaced, `#fragments` kept; external URLs and pages untouched; no fingerprints on the live server | 6 |
-| `test/site.test.mts` | site settings / calendar links | The committed `content/site.yaml` loads; bad calendar or form-question IDs are rejected with the key named; "Add to Google Calendar" link decodes to the calendar ID; iCal and webcal links point at the same public feed | 5 |
-| `test/forms.test.mts` | parseGoogleForm / formDrift | Google Form structure parsed (IDs, titles, types, required, options), non-questions skipped, layout changes throw; drift detected for deleted/re-created questions and new *required* ones, not for new optional ones. Uses a built-in sample, not the live form | 5 |
-| `test/theme.test.mts` | theme validation | The committed `content/theme.yaml` passes; 6/8-digit hex accepted; color names, short hex, references, nesting, and non-kebab keys rejected; team list rules (unique ids, both colors, no extra keys); flattening to CSS variables | 7 |
-| `test/site-links.test.mts` | local links and assets resolve | Every `href`/`src` in every page of `public/` points to a file that exists (one case per page) | 8 |
-| `test/docs.test.mts` | docs/RUNBOOK.md | Every npm script is in [§2](#2-npm-scripts) and every test file is in this table | 2 |
+| **Lint, typecheck, test** | Installs dependencies, runs lint, type check, theme check, image check, all tests, and the export | Every PR and every update to `main` | Yes |
+| **Kubernetes manifests** | Checks the (optional) Kubernetes configuration is valid; see [CONTAINERIZATION.md](CONTAINERIZATION.md) | Same | Yes |
+| **Container image** | Builds the (optional) container and confirms it serves pages; see [CONTAINERIZATION.md](CONTAINERIZATION.md) | Same | Yes |
+| **Conventional PR title** | PR title starts with an allowed type ([§5](#5-versions-and-releases)) | When a PR is opened or edited | Yes |
+| **Live form matches site settings** | `npm run check:form` against the real Google Form | Daily, on demand, and on PRs that change form settings | No: it depends on Google being reachable |
+| Dependabot | Opens PRs that update dependencies; they go through the checks above | Weekly | n/a |
 
-### What CI runs
-
-| Workflow → job | Runs | When | Blocks merging? |
-|---|---|---|---|
-| CI → **Lint, typecheck, test** | `npm ci`, lint, typecheck, `validate:theme`, `npm test`, `npm run export` (uploads `dist/` as an artifact) | Every PR, push to `main`, merge queue | Yes |
-| CI → **Kubernetes manifests** | Renders every overlay with `kubectl kustomize`, validates with `kubeconform -strict` | Same | Yes |
-| CI → **Container image** | Builds the image, runs it read-only as UID 1000, requests `/healthz`, `/`, `/members`, and an image | Same | Yes |
-| PR title → **Conventional PR title** | Title starts with an allowed type ([README → Versioning](../README.md#versioning)) | PR opened, edited, or updated | Yes |
-| Mailing-list form drift → **Live form matches site settings** | `npm run check:form` against the live Google Form | Daily, on demand, and on PRs touching form settings | No (depends on Google being up) |
-| Dependabot | Opens dependency-update PRs, which then go through the checks above | Weekly | n/a |
-
-Run a single CI job's equivalent locally: the commands in [§2](#2-npm-scripts) (pre-commit check), [§4 Container image](#container-image), and `kubectl kustomize kube/overlays/<name>`.
+**Changes made in the site editor (CMS)** also arrive as PRs, so the same checks apply to them: a bad color or oversized photo from the editor fails CI like any other change. The editor doesn't run `npm` itself; it runs in the browser. It will get its own instant field checks (e.g. color format) when it's configured, so editors see mistakes before saving.
 
 ### Not covered yet
 
-Planned (see [PROJECT_LOG.md](PROJECT_LOG.md)): browser tests across phone/desktop sizes (Playwright), accessibility checks (axe), screenshot comparison, performance budgets (Lighthouse), a color-contrast check for `theme.yaml`, and the roster/alumni check. Nothing yet asserts the contents of the exported `dist/` directly; fingerprinting is covered by the unit tests and the container smoke test.
+Planned ([PROJECT_LOG.md](PROJECT_LOG.md)): browser tests on phone and desktop sizes (Playwright), accessibility checks (axe), screenshot comparison, performance budgets (Lighthouse), a color-contrast check, and the roster check. Nothing tests the exported `dist/` folder directly yet.
 
-Checked by hand, not automatically: the "Add to Google Calendar" button (needs a signed-in Google account).
+Checked by hand only: the "Add to Google Calendar" button (needs a signed-in Google account).
 
-## 7. When CI fails
+## 11. When CI fails
 
-| Failing check | What it means | Fix |
+Open the failed check on the PR and read the log; every check prints what's wrong.
+
+| Failing check / step | What it means | Fix |
 |---|---|---|
-| **Conventional PR title** | Title doesn't start with an allowed type | Edit the PR title (e.g. `fix: …`). No new commit needed |
-| **Lint, typecheck, test** → lint / typecheck | Code style or type error | Run the same command locally; `npm run lint -- --fix` handles most lint issues |
-| … → Validate theme.yaml | A color isn't `#rrggbb`, a key isn't kebab-case, or a team entry is malformed | The error names the exact key; fix it in `content/theme.yaml` |
-| … → test: *local links and assets resolve* | A page references a file that doesn't exist (renamed/deleted image) | The failure lists the missing paths; fix the reference or restore the file |
-| … → test: *every npm script / test file is documented* | A script was added to `package.json` without a row in [§2](#2-npm-scripts), or a test file without a row in [§6](#6-tests-and-checks) | Add the row |
-| **Kubernetes manifests** | A Kustomize overlay doesn't render, or a resource fails schema validation | `kubectl kustomize kube/overlays/<name>` locally; kubeconform's message names the field |
-| **Container image** | Build failed, or the container didn't serve pages under pod constraints | `docker build` and `docker run` locally ([§4](#container-image)); check `docker logs` |
-| **Mailing-list form drift** (daily, not required) | A Google Form question was deleted or re-created, or a new required question was added | `npm run check:form` shows which; update the ID in `content/site.yaml` (open the form → ⋮ → *Get pre-filled link*: field names show as `entry.<id>`) |
+| **Conventional PR title** | The title doesn't start with an allowed type | Edit the PR title (e.g. `fix: …`). No new commit needed |
+| Lint | ESLint found a likely bug or style problem | Run `npm run lint` locally; `npm run lint -- --fix` fixes most |
+| Typecheck | A value is used inconsistently with its type | Run `npm run typecheck`; the message names the file and line |
+| Validate theme.yaml | A color isn't a hex value, a key is misnamed, or a team entry is malformed | The message names the exact key in `content/theme.yaml` |
+| Check image sizes | An image is too large, duplicated, or an exception is stale | Resize ([§6](#6-images)), reuse the existing file, or add/remove an exception |
+| Test: *local links and assets resolve* | A page points to a file that doesn't exist | The failure lists the missing paths |
+| Test: *docs/RUNBOOK.md …* | A script, test file, or PR type was added without documenting it here | Add the row to [§3](#3-npm-scripts), [§10](#10-tests-and-checks), or [§5](#5-versions-and-releases) |
+| **Kubernetes manifests** / **Container image** | The optional container setup broke | See [CONTAINERIZATION.md](CONTAINERIZATION.md#when-its-checks-fail) |
+| **Live form matches site settings** (daily) | A Google Form question was deleted, re-created, or a required one added | `npm run check:form` says which. Update the ID in `content/site.yaml` (open the form → ⋮ → *Get pre-filled link*; fields appear as `entry.<id>`) |
 
-## 8. Routine maintenance
+## 12. Routine maintenance
 
 | When | Task |
 |---|---|
-| Weekly (Dependabot PRs) | Review and merge dependency PRs (`deps:` = patch release, `ci:` = no release) once checks pass |
-| When the form drift check emails | [§7](#7-when-ci-fails), last row |
-| Start of each semester | Confirm upcoming shows are in the shows calendar; roster updated (leavers → Alumni); officer list in `ROSTER_OFFICERS` current |
-| When officers change | Update GitHub access, `ROSTER_OFFICERS`, and access to the Hive Google account / Cloudflare |
+| Weekly | Review and merge Dependabot PRs once their checks pass |
+| When the daily form check emails you | [§11](#11-when-ci-fails), last row |
+| Start of each semester | Upcoming shows are in the shows calendar; roster is updated (leavers → Alumni); `ROSTER_OFFICERS` lists current officers |
+| When officers change | Update GitHub access, `ROSTER_OFFICERS`, and who can access the Hive Google and Cloudflare accounts |
 | Before making the repo public | Review git history for anything that shouldn't be public |
 
-## 9. Troubleshooting
+## 13. Troubleshooting
 
-- **Browser shows an old version:** hard-reload (Ctrl/Cmd + Shift + R). On the deployed site this should never be needed, because assets are fingerprinted; if it is, check that the deploy ran `npm run export`.
-- **`npm start` fails with a site.yaml error:** the message names the bad key in `content/site.yaml`.
-- **Port 8080 already in use:** `PORT=3000 npm start`, or find the other process with `lsof -i :8080`.
-- **`npm ci` fails:** `package-lock.json` and `package.json` disagree. Run `npm install` to update the lockfile and commit both.
-- **Local k3d site not reachable at hive.localhost:8081:** `kubectl -n hive get pods,ingress`. Pods stuck in `ErrImageNeverPull`/`ImagePullBackOff` mean the image wasn't imported: re-run `k3d image import`.
+- **Browser shows an old version:** hard-reload (Ctrl/Cmd + Shift + R). On the live site this shouldn't happen; if it does, check the deploy ran `npm run export`.
+- **`npm start` fails with a `site.yaml` error:** the message names the setting to fix in `content/site.yaml`.
+- **"Port 8080 already in use":** `PORT=3000 npm start`, or find what's using it with `lsof -i :8080`.
+- **`npm ci` fails:** `package.json` and `package-lock.json` disagree. Run `npm install` once and commit both files.

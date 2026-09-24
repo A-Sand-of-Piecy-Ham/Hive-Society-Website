@@ -36,7 +36,7 @@ npm ci
 npm start            # http://localhost:8080
 ```
 
-**Every command, deployment, and setup step is in [docs/RUNBOOK.md](docs/RUNBOOK.md)**: npm scripts, making a change, Cloudflare Pages / container / Kubernetes deploys, one-time GitHub and Cloudflare setup, what to do when CI fails, and routine maintenance.
+**Every command, deployment, and setup step is in [docs/RUNBOOK.md](docs/RUNBOOK.md)**: npm scripts and what they check, making a change, versions and releases, images, deploying, one-time GitHub/Cloudflare setup, roster changes, tests and CI, and maintenance. Optional container/Kubernetes hosting: [docs/CONTAINERIZATION.md](docs/CONTAINERIZATION.md).
 
 ## Layout
 
@@ -50,7 +50,8 @@ scripts/             static export → dist/, theme validator CLI
 test/                node:test suites
 .github/             CI workflows, PR-title check, Dependabot
 kube/                Kubernetes manifests: base/ plus overlays/local (k3d) and overlays/prod (k3s + Cloudflare Tunnel)
-docs/                RUNBOOK.md (all commands and procedures), PROJECT_LOG.md, site audit
+docs/                RUNBOOK.md (all commands and procedures), CONTAINERIZATION.md (optional),
+                     PROJECT_LOG.md, site audit
 EDITING.md           guide for non-coders (keep it accurate when what's editable changes)
 AGENTS.md            instructions for AI coding agents (keep it updated when conventions change)
 ```
@@ -112,6 +113,8 @@ For a website, "breaking" means breaking something **someone else relies on**: e
 | **Major** `1.5.0 → 2.0.0` | Breaking changes: removing or renaming a theme key or content field, changing page URLs, or a change that needs manual deployment steps (new secret, new cluster, new site engine) | `feat!:` / `fix!:` or a `BREAKING CHANGE:` note |
 | *No release* | Changes that can't affect how the running site behaves: tests, CI, docs, formatting, repo housekeeping | `test:` `ci:` `docs:` `style:` `chore:` |
 
+Every type, with examples and what releases look like: [RUNBOOK §5](docs/RUNBOOK.md#5-versions-and-releases).
+
 A big internal rewrite is **not** automatically major. What decides the bump is the effect on those contracts. A rewrite that keeps every URL, theme key, and content field working is a `refactor:` (patch), or a `feat:` if it adds something.
 
 The test is **regression risk**, not whether code was touched: if a change could make the deployed site behave or look different, even by accident, it gets at least a patch, so a regression can be traced to the release that introduced it. Refactors, build/image changes, and dependency updates all qualify. Formatting-only (`style:`) and test-only (`test:`) changes edit code too, but can't change what the running site does, so they don't cut a release. Edits made through the site editor (CMS) get a `content:` or `theme:` title automatically.
@@ -129,4 +132,4 @@ A `?nocache` page parameter couldn't do this anyway: stylesheets and images are 
 ## Deploying
 
 - **Static, current:** `npm run export`, then upload `dist/` (e.g. `npx wrangler pages deploy dist`).
-- **Kubernetes:** see the comments at the top of `kube/overlays/local/kustomization.yaml` (local k3d) and `kube/overlays/prod/kustomization.yaml` (production k3s behind a Cloudflare Tunnel).
+- **Containers / Kubernetes (optional):** [docs/CONTAINERIZATION.md](docs/CONTAINERIZATION.md).

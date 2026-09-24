@@ -15,3 +15,14 @@ mailing-list:
     name: 1774114897
     email: 1519864352
     interests: 1889493696
+
+images:
+  # Limits for every image under public/assets/images, checked by `npm run check:images` in CI.
+  # Phone photos are ~4000 px and several MB; resize before adding (see docs/RUNBOOK.md → Images).
+  max-long-edge-px: 1200
+  max-file-kb: 300
+  # Exceptions: file name → why it needs to be bigger. Every exception is downloaded by visitors,
+  # so keep this list short. Entries for files that no longer exist fail the check.
+  exceptions:
+    screenshot-2025-12-09-at-1.40.39pm.jpg: Full-width homepage hero; needs 1920 px to stay sharp on large screens
+    social-preview.png: Link-preview image for social media; platforms recommend about 1200 px
