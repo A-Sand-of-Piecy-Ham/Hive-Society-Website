@@ -104,6 +104,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-23: RUNBOOK dependency tables (required: Node 24, git; optional by task: Docker, kubectl, k3d, ImageMagick, kustomize, kubeconform, gh). Local k3d flow verified end to end (Traefik ingress at hive.localhost:8081, read-only pod as UID 1000, rollout restart).
 - 2026-09-23: `docs/RUNBOOK.md`: setup, all npm scripts with options, change workflow, deploys (Pages, container, k3d, prod k3s), one-time GitHub/Cloudflare/Google setup, CI-failure guide, maintenance calendar, troubleshooting. `test/docs.test.mts` fails if an npm script is undocumented. README/AGENTS point to it.
 - 2026-09-23: Mailing-list config in `content/site.yaml`; `src/forms.mts` (Google Form structure parser + drift comparison) with tests; `npm run check:form`; `form-drift.yml` workflow. Live form verified: 3 questions, IDs match.
 - 2026-09-23: Calendar audit: public calendars, Indify config exposure, Indify blank due to private primary calendar + free-tier 1-month-back/3-month-ahead window. Unlisting steps given to officers (secret iCal link or Google Group).

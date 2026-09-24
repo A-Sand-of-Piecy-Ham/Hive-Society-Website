@@ -10,7 +10,32 @@ Not a developer? You want [EDITING.md](../EDITING.md) instead.
 
 ## 1. Setup
 
-**Requires:** Node 24+ ([nvm](https://github.com/nvm-sh/nvm): `nvm install 24`), git, and Docker (only for container and Kubernetes work).
+### Dependencies
+
+**Required**: everything in [§2](#2-npm-scripts) and [§3](#3-making-a-change) needs only these:
+
+| Tool | Version | Install | Check |
+|---|---|---|---|
+| Node.js (includes npm) | 24+ | [nvm](https://github.com/nvm-sh/nvm): `nvm install 24` | `node --version` |
+| git | any recent | [git-scm.com](https://git-scm.com/downloads) | `git --version` |
+
+**Optional**: only for the task listed. Skip any you don't need.
+
+| Tool | Needed for | Install | Check |
+|---|---|---|---|
+| Docker | Building/running the container image; required by k3d | [Docker Desktop](https://docs.docker.com/desktop/) (macOS/Windows, incl. WSL2) or [Docker Engine](https://docs.docker.com/engine/install/) (Linux) | `docker --version` |
+| kubectl | Any Kubernetes work (render, apply, logs) | [kubernetes.io/docs/tasks/tools](https://kubernetes.io/docs/tasks/tools/) · `brew install kubectl` | `kubectl version --client` |
+| k3d | Running the site in a local Kubernetes cluster | `curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh \| bash` · `brew install k3d` | `k3d version` |
+| ImageMagick | Resizing images before committing ([§3](#3-making-a-change)) | `sudo apt install imagemagick` · `brew install imagemagick` | `convert -version` (v7: `magick -version`) |
+| kustomize | Only for `kustomize edit set image` when releasing to production; rendering uses kubectl | [kubectl.docs.kubernetes.io/installation/kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/) · `brew install kustomize` | `kustomize version` |
+| kubeconform | Validating manifests locally (CI already does it) | [github.com/yannh/kubeconform](https://github.com/yannh/kubeconform#installation) · `brew install kubeconform` | `kubeconform -v` |
+| GitHub CLI (`gh`) | Opening PRs / checking CI from the terminal (the website works just as well) | [cli.github.com](https://cli.github.com/) · `brew install gh` | `gh --version` |
+
+`wrangler` (Cloudflare deploys) needs no install: it runs through `npx`.
+
+Tested with Node 24.21, Docker 29.0, kubectl 1.34, k3d 5.9, ImageMagick 6.9. ImageMagick 7 renamed `convert` to `magick`; substitute it in the commands below.
+
+### Get the site running
 
 ```bash
 git clone <repo-url> hive_site && cd hive_site
@@ -92,6 +117,8 @@ npx wrangler pages deploy dist --project-name=<pages-project-name> --branch=main
 
 ### Container image
 
+Needs Docker ([§1](#dependencies)).
+
 ```bash
 docker build -t hive-site:dev .                      # multi-stage: runs the export, serves dist/
 docker run --rm --read-only --user 1000 -p 8080:8080 hive-site:dev   # same constraints as the Kubernetes pod
@@ -107,7 +134,7 @@ docker push ghcr.io/<owner>/hive-site:<version>
 
 ### Kubernetes: local (k3d)
 
-Install [k3d](https://k3d.io/) (`curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash`) and kubectl.
+Needs Docker, kubectl, and k3d ([§1](#dependencies)). Verified end to end on 2026-09-23.
 
 ```bash
 k3d cluster create hive -p "8081:80@loadbalancer"    # one time; Traefik is included
@@ -120,6 +147,8 @@ k3d cluster delete hive                              # tear down
 After a code change, rebuild, re-import, then `kubectl -n hive rollout restart deploy/hive-site`.
 
 ### Kubernetes: production (k3s + Cloudflare Tunnel)
+
+Needs kubectl with access to the production cluster ([§1](#dependencies)); kustomize only if you use `kustomize edit`.
 
 One time (see [§5](#5-one-time-project-setup) for creating the tunnel):
 
