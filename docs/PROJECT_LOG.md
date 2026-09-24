@@ -68,8 +68,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] CODEOWNERS: `content/**` editors vs `src/**`, `kube/**`, `.github/**` developers.
 
 ### Site
-- [ ] **New members (Fall '26 roster):** replace the placeholder photo, `Class of '??`, and `<ALMOST FUNNY QUIP>` on the 15 new members' cards once photos, class years, and quips arrive. `grep -n "portrait-placeholder\|ALMOST FUNNY\|'??" public/members.html` finds them.
-- [ ] Confirm member page wording: aux-board committee names and "(lead)" marks, and returning members' quips that reference old roles (e.g. Tess O'Brien's exec-role quip).
+- [ ] **New members (Fall '26 roster):** replace the placeholder photo, `Class of '??`, and `<ALMOST FUNNY QUIP>` on the 15 new members' cards and Chang Zhou's (missed in last year's roster update; uses the same placeholders) once photos, class years, and quips arrive. `grep -n "portrait-placeholder\|ALMOST FUNNY\|'??" public/members.html` finds them.
 - [ ] **Calendar page (on hold, decided 2026-09-23):** replaces Indify, which is blank today (its `checkedCalendars` is the account's private primary calendar; no events in any month, Sep 2023 → Sep 2026). Build-time from the shows calendar's ICS (parser must handle recurrence + timezones, e.g. `node-ical`). Month grid + upcoming-shows list under it; per show: title, date/time, venue, **description**, **add-to-calendar** link.
 - [ ] **Scheduled rebuilds** (with the calendar page): Pages deploy hook stored as `PAGES_DEPLOY_HOOK` secret; daily GitHub Actions cron POSTs to it (redeploy only if the feed changed).
 - [ ] **Homepage "Next show" (on hold):** next upcoming show from the same data replaces "Come See Us!"; falls back to it when nothing is scheduled.
@@ -106,7 +105,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
-- 2026-09-24: Roster updated: new Executive Board (co-presidents, VP, secretary, treasurer, membership director), aux-board roles noted on member cards, 15 new members with a shared placeholder photo, 14 former members moved to Alumni. Active members merged into one gallery; 3 empty leftover alumni cards removed.
+- 2026-09-24: Roster updated: new Executive Board (co-presidents, VP, secretary, treasurer, membership director), aux-board roles noted on member cards, 15 new members plus Chang Zhou (missed last year) with a shared placeholder photo, 13 former members moved to Alumni. Alumni portraits kept for now (removal planned later). Active members merged into one gallery; 3 empty leftover alumni cards removed.
 - 2026-09-23: Project log cleanup. Resolved: calendar source (shows-only "Hive Shows - Website Calendar", see Decisions) and rendering engine (Astro). Merged duplicate Indify/iframe, image-sizing, and theme-CSS items; mailing-list drift check marked done within its item.
 - 2026-09-23: Member portraits resized to 1080 px (5.4 MB → 4.8 MB, max 199 KB); `image-limits.portraits` tightened to 1080 px / 225 KB. Sized for the large half-width card (~540 CSS px at 2×) so any member can be promoted into one. Homepage hero → `homepage-group-photo.jpg`, About photo → `about-group-spiral-photo.jpg`. Decided: no team-name ↔ team-data check until there's a rename procedure (teams rename ~yearly).
 - 2026-09-23: Team photos/logos moved to `public/assets/images/teams/<team-id>.jpg|png` (9 files, ids match `theme.yaml` teams where present), naming enforced by `check:images`; fixed `alt` text (7 of 9 said "DeMarcus Blackington", one named the wrong team). `image-limits` split into per-class sections (`portraits`, `team-photos`, `other`), all required, unknown sections rejected.
