@@ -76,3 +76,8 @@ section.contacts03 .calendar-subscribe {
 section.contacts03 .calendar-subscribe .btn {
   margin: 0;
 }
+
+/* Social icons: inline SVGs (replacing the Socicon font) sized and colored like the glyphs they
+   replace, so the per-section .mbr-iconfont rules (font-size, color) still apply. */
+.social-icon { display: inline-block; line-height: 0; vertical-align: -0.0625em; } /* glyph descent was 64/1024 em */
+.social-icon > svg { display: block; width: 1em; height: 1em; fill: currentColor; }
