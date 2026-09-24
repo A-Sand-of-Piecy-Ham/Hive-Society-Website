@@ -28,8 +28,8 @@ describe('docs/RUNBOOK.md', () => {
   });
 
   it('documents every test file in its test suites table', async () => {
-    const files = (await readdir('test')).filter((f) => f.endsWith('.test.mts'));
-    const missing = files.filter((f) => !runbook.includes(`| \`test/${f}\` |`));
+    const files = (await readdir('tests')).filter((f) => f.endsWith('.test.mts'));
+    const missing = files.filter((f) => !runbook.includes(`| \`tests/${f}\` |`));
     assert.deepEqual(missing, [], 'add a row to RUNBOOK.md §10 for each of these test files');
   });
 });

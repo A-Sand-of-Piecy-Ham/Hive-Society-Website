@@ -4,5 +4,5 @@
     "erasableSyntaxOnly": true, "verbatimModuleSyntax": true, "types": ["node"],
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "scripts", "test", "*.mts"]
+  "include": ["src", "scripts", "tests", "*.mts"]
 }

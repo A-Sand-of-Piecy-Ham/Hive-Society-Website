@@ -54,7 +54,7 @@ src/forms.mts          Google Form structure parser + drift comparison
 src/render.mts         shared HTML transform (server + export): fills data-site-link hrefs; export adds ?v=<hash>
 scripts/export.mts     public/ → dist/ + robots.txt, sitemap.xml, _headers
 scripts/validate-theme.mts   CLI used by CI
-test/*.test.mts        node:test suites (server, theme, local link/asset check)
+tests/*.test.mts       node:test suites (server, theme, local link/asset check)
 .github/               ci.yml (required checks), pr-title.yml, dependabot.yml
 kube/base, kube/overlays/{local,prod}   Kustomize; prod = k3s + Cloudflare Tunnel
 docs/                  RUNBOOK.md (commands/procedures), PROJECT_LOG.md (decisions + TODOs), site-audit.md

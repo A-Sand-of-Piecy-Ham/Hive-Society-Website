@@ -47,7 +47,7 @@ public/              the website: HTML pages, images, CSS
 src/                 Node server (server.mts entry, app.mts handler), page rendering (render.mts),
                      site settings (site.mts), theme validation (theme.mts)
 scripts/             static export → dist/, theme validator CLI
-test/                node:test suites
+tests/               node:test suites
 .github/             CI workflows, PR-title check, Dependabot
 kube/                Kubernetes manifests: base/ plus overlays/local (k3d) and overlays/prod (k3s + Cloudflare Tunnel)
 docs/                RUNBOOK.md (all commands and procedures), CONTAINERIZATION.md (optional),

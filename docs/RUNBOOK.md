@@ -54,7 +54,7 @@ public/ (pages) ─┼─► npm start           → local preview, http://local
 - **`public/assets/images/members/`**: one portrait per member, `firstname-lastname.jpg` ([§6](#member-portraits)).
 - **`src/`**: the small Node server behind `npm start`, and the code that reads the YAML files.
 - **`scripts/`**: the export and the checks that CI runs.
-- **`test/`**: automated tests ([§10](#10-tests-and-checks)).
+- **`tests/`**: automated tests ([§10](#10-tests-and-checks)).
 - **GitHub Actions** (CI) runs the checks on every change; **Cloudflare Pages** builds and hosts the live site from GitHub.
 
 ## 3. npm scripts
@@ -85,8 +85,8 @@ Useful variations:
 ```bash
 npm run lint -- --fix                               # let ESLint fix what it can
 npm run validate:theme -- path/to/other-theme.yaml  # check a different file
-node --test test/theme.test.mts                     # run one test file
-node --test --test-name-pattern='health' test/app.test.mts   # run only tests whose name matches
+node --test tests/theme.test.mts                     # run one test file
+node --test --test-name-pattern='health' tests/app.test.mts   # run only tests whose name matches
 PORT=3000 npm start                                 # use another port
 SITE_URL=https://staging.example.com npm run export # different domain in sitemap/robots
 ```
@@ -261,18 +261,18 @@ The action checks the person running it is listed in `ROSTER_OFFICERS` ([§8](#8
 
 ### Test suites (`npm test`)
 
-Written with Node's built-in test runner (`node:test`, no extra framework). All offline, under a second. This table must list every file in `test/`; a test enforces it.
+Written with Node's built-in test runner (`node:test`, no extra framework). All offline, under a second. This table must list every file in `tests/`; a test enforces it.
 
 | File | What it guarantees |
 |---|---|
-| `test/app.test.mts` | The local server: pages load at `/` and without `.html`; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; missing pages give 404; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
-| `test/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs |
-| `test/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
-| `test/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
-| `test/theme.test.mts` | The color rules for `theme.yaml`: real hex values only, no color names or references, correct naming, valid team list |
-| `test/images.test.mts` | Reading image dimensions, and the image rules: per-folder size limits, every class has limits, exceptions need a reason, no duplicates, no leftover exceptions, member portrait and team photo naming |
-| `test/site-links.test.mts` | Every link and image on every page points to a file that exists |
-| `test/docs.test.mts` | This runbook lists every npm script, every test file, and every allowed PR-title type |
+| `tests/app.test.mts` | The local server: pages load at `/` and without `.html`; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; missing pages give 404; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
+| `tests/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs |
+| `tests/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
+| `tests/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
+| `tests/theme.test.mts` | The color rules for `theme.yaml`: real hex values only, no color names or references, correct naming, valid team list |
+| `tests/images.test.mts` | Reading image dimensions, and the image rules: per-folder size limits, every class has limits, exceptions need a reason, no duplicates, no leftover exceptions, member portrait and team photo naming |
+| `tests/site-links.test.mts` | Every link and image on every page points to a file that exists |
+| `tests/docs.test.mts` | This runbook lists every npm script, every test file, and every allowed PR-title type |
 
 ### What CI runs (automatic testing)
 
