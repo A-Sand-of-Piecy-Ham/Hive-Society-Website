@@ -7,6 +7,15 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 
 | Date | Decision | Why |
 |---|---|---|
+| 2026-09-23 | Calendar: source is the revived shows-only **"Hive Shows - Website Calendar"**; page shows a **month grid with an upcoming-shows list under it**; each show shows its Google Calendar **description** and its own **add-to-calendar** link; homepage features the **next show** (falls back to "Come See Us!"). Freshness: up to a week is acceptable, so a **daily scheduled rebuild** is plenty (no visitor-side JavaScript needed). **Build deferred** | User answers to calendar questions; a live API would be overkill for the required freshness |
+| 2026-09-23 | **Framework: Astro** (approved). Rationale recorded in README → Architecture | Content-heavy site maintained by non-coders: typed content collections, zero-JS default, static-first with optional Node adapter |
+| 2026-09-23 | Roster-removal override = officer-run `workflow_dispatch` ("Approve roster removal") that sets a status on the PR head SHA; officer allowlist in repo variable `ROSTER_OFFICERS`. No labels, tokens, or files | No lasting record of removals beyond git history; approval can't be self-granted by typing text; invalidated by new commits |
+| 2026-09-23 | Mailing-list form drift check: daily scheduled + on PRs touching form settings; not a required check | Catches deleted/re-created Google Form questions without letting a Google outage block merges |
+| 2026-09-23 | Repository is **private** for now; may be made public later (portfolio). Review history before publicizing | Roster history, including removals, would be public |
+| 2026-09-23 | Calendar: **build-time render from the public Google Calendar ICS** (approved). Mailing list: **native themed form posting to the existing Google Form** (approved) | Editors keep using Google tools; site gets themed UI |
+| 2026-09-23 | All footers charcoal `#232323` (matching home); was purple on 5 of 7 pages | Consistency; user choice |
+| 2026-09-23 | Caching: content-hash fingerprints on asset URLs at export + immutable `/assets/*`; HTML always revalidates. No "disable cache" switch | Stale assets become impossible rather than bypassable; a page query param can't affect subresource caching anyway |
+| 2026-09-23 | Settings-driven values (calendar ID) live in `content/site.yaml`, referenced from markup via `data-site-link` | No hard-coded IDs/URLs in pages |
 | 2026-09-23 | `main` is branch-protected with required CI checks and squash merges; all changes land via PRs | CMS PRs, CI gating, and PR-title-driven versioning all rely on it |
 | 2026-09-23 | Source images normalized before the first commit: JPEG, ≤1200 px (hero 1920), q82, metadata stripped; opaque PNGs converted to JPEG | Git keeps every blob forever, so the 54 MB originals were kept out of history (now ~7 MB) |
 | 2026-09-23 | `AGENTS.md` is the canonical agent guide and is updated alongside convention changes | Heavy agentic development expected; stale guidance compounds |
@@ -23,13 +32,15 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 ## TODO
 
 ### Decisions needed
+- [ ] **Which Google Calendar is the source?** Site uses "Hive Shows - Website Calendar" (last event 2024-12-07). "Hive Society 2025 Official Calendar!" (public, events to 2026-05) mixes shows with internal meetings. Recommendation: a shows-only public calendar; change `content/site.yaml`.
+- [ ] Members data location: `content/members/` now, or wait for the Beeble/`handbook/` decision.
 - [ ] GitHub home for this repo (Hive org?). CI, CMS, and GHCR all depend on it.
 - [ ] Rendering engine for templated pages (Astro recommended; see `docs/site-audit.md` §4).
 - [ ] Content PR policy: auto-merge on green checks vs require one approval.
 
 ### Theme
 - [ ] Theme build step: `content/theme.yaml` → generated `:root { --group-key: … }` CSS, consumed by templates.
-- [ ] Theme validator (CI): every value is `#rrggbb`/`#rrggbbaa`; keys match the schema; no unknown groups; team `id`s unique and present in team data.
+- [ ] Theme validator: also check team `id`s exist in the team data (once members/teams data exists). *(Format, kebab-case, list shape, and unique ids are done.)*
 - [ ] Contract-break check (CI): fail if a theme key or content field is removed/renamed without a `!` / `BREAKING CHANGE` PR title.
 - [ ] Contrast check (CI): WCAG AA for each text/background pair (e.g. `buttons.text` on `buttons.background`, each `teams.*`).
 - [ ] Fix `links.text` (`#ffa600` on `#ffeb69` fails contrast).
@@ -43,8 +54,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Commit message templates that satisfy the PR-title / Conventional Commits check.
 
 ### CI / testing
-- [ ] GitHub Actions: lint, typecheck, `node:test` unit tests, export build, Docker build.
-- [ ] `kubectl kustomize` + kubeconform on both overlays.
+- [ ] Roster check: a member removed from the active roster must appear in alumni (graduated *or* left); override via the officer-run "Approve roster removal" workflow (see decision). Needs members as data first. Set `ROSTER_OFFICERS` repo variable; consider short Actions log retention.
 - [ ] Playwright: functional tests across viewports (phone + desktop).
 - [ ] Playwright + axe: accessibility checks per page.
 - [ ] Playwright visual regression with screenshot diffs posted to the PR.
@@ -55,10 +65,19 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] CODEOWNERS: `content/**` editors vs `src/**`, `kube/**`, `.github/**` developers.
 
 ### Site
+- [ ] **Calendar page (on hold, decided 2026-09-23):** build-time from the shows calendar's ICS (parser must handle recurrence + timezones, e.g. `node-ical`). Month grid + upcoming-shows list under it; per show: title, date/time, venue, **description** (from the Google Calendar event), **add-to-calendar** link. Daily scheduled rebuild (redeploy only if the feed changed).
+- [ ] **Homepage "Next show" (on hold):** next upcoming show from the same data replaces "Come See Us!"; falls back to it when nothing is scheduled.
+- [ ] After the calendar page ships: remove Indify and revoke its access to the Hive Google account. Officers: move upcoming shows into "Hive Shows - Website Calendar"; unlist "Hive Society 2025 Official Calendar!" (secret link or Google Group).
+- [ ] Mailing list: native form → Google Form `formResponse` (entry IDs in `content/site.yaml`, not markup) + CI drift check against the live form.
+- [ ] Manually verify the "Add to Google Calendar" link while signed in to a Google account (can't be checked by CI).
+- [ ] Privacy (audited 2026-09-23): "Hive Society 2025 Official Calendar!" is public and mixes shows with internal events (meetings, socials at "Hive House", "Survivor Night", a constitution meeting, trips, tentative dates). Titles/dates only: no descriptions, attendees, or residential addresses. The Indify widget's public page config exposes the IDs of all three connected calendars plus the account address, which is how the calendar is discoverable. Officers decide whether it should stay public.
+- [ ] The live Calendar page is **empty**: the Indify widget shows no events in any month (checked Sep 2023 → Sep 2026) and never requests event data. Its `checkedCalendars` is the account's private primary calendar, not the public shows calendar. Replacing Indify fixes this.
+- [ ] **Expand the About page.** It's two paragraphs beside a large photo. Ideas: what long-form improv is, how the society works (NewBee → core teams, electives), how auditions work, a short history/lineage timeline (from teams data), FAQ, a video.
+- [ ] Image sizing by role (see decision needed below): hero ≤ ~65vh, member cards ~280 px, exec cards ~360 px; source files at 2× display size.
 - [ ] Responsive images at export: AVIF/WebP variants, `srcset`/`sizes`, `loading="lazy"`. Source images are already normalized (~7 MB total).
 - [ ] Extract site settings (`site.yaml`) and move nav/footer into a shared layout.
 - [ ] Members and teams as data; responsive grid layout (see audit §5).
-- [ ] Accessibility fixes: `lang`, `<main>`, heading order, labelled social links, stable anchors.
+- [ ] Accessibility fixes: `<main>` landmark, heading order, stable anchors (`lang` and labelled social links are done).
 - [ ] Replace the Indify calendar and Google Form iframes with native components.
 
 ### Beeble
@@ -72,13 +91,29 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] *If the monorepo is rejected:* transfer `lumirth/beeble` to the Hive org instead (keeps history and redirects), give it its own CMS instance, and have this site fetch its data at build time.
 - [ ] Fix its deploy workflow: installs mdBook via rustup on cache miss; `actions/cache@v3` is deprecated.
 
+### Astro migration
+- [ ] Scaffold Astro (TypeScript strict) alongside the current site; port layout (nav/footer) and one page first to validate the approach.
+- [ ] Content collections + schemas: members, teams, events; theme.yaml → CSS custom properties; site.yaml → settings.
+- [ ] Port pages; retire `public/` Mobirise pages, `src/render.mts` fingerprinting, and `overrides.css`.
+- [ ] Keep the Node server path via `@astrojs/node` only if a dynamic feature needs it.
+
 ### Housekeeping
+- [ ] Private repo on GitHub Free can't enforce branch protection: get GitHub Pro (Student Developer Pack) or host under an org on Team.
 - [ ] On creating the GitHub remote: enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push).
-- [ ] `package.json`: remove the ESLint transitive tree from `dependencies`; drop stale `"main"`.
 - [ ] Set the real GHCR owner in `kube/overlays/prod/kustomization.yaml`.
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-23: Mailing-list config in `content/site.yaml`; `src/forms.mts` (Google Form structure parser + drift comparison) with tests; `npm run check:form`; `form-drift.yml` workflow. Live form verified: 3 questions, IDs match.
+- 2026-09-23: Calendar audit: public calendars, Indify config exposure, Indify blank due to private primary calendar + free-tier 1-month-back/3-month-ahead window. Unlisting steps given to officers (secret iCal link or Google Group).
+- 2026-09-23: Asset fingerprinting in export + immutable caching; server cache policy (`?v=` immutable, else revalidate with Last-Modified/304); Docker image now serves the exported `dist/` (multi-stage).
+- 2026-09-23: `content/site.yaml` + `data-site-link` rendering; calendar page gets "Add to Google Calendar" / "Apple / Outlook" buttons built from the calendar ID.
+- 2026-09-23: All footers charcoal; `theme.yaml` `footer.background` updated to match.
+- 2026-09-23: `EDITING.md` (non-coder guide). `package.json` cleaned: bogus `dependencies` removed, `yaml` is the only runtime dependency, `private: true`.
+- 2026-09-23: Layout fixes (`public/assets/site/overrides.css`): footer padding (453 → 277 px), sticky footer on short pages, contact page tightened (no scroll at 1920×1080), mailing-list form frame sized to the form (no inner scrollbar). Homepage hero cropped (top 30% ceiling removed; 912 → 645 px tall at full HD).
+- 2026-09-23: CI (`.github/workflows/ci.yml`): lint, typecheck, theme validation, `node:test` suites, static export artifact; Kustomize + kubeconform on every overlay; Docker build + smoke test under pod constraints. PR-title check (`pr-title.yml`); Dependabot (`deps:` / `ci:` prefixes).
+- 2026-09-23: Tests: server routing/traversal/methods, theme rules, local link and asset check across all pages. Server split into `src/app.mts` (testable) + `src/server.mts` (entry).
+- 2026-09-23: Mobirise cleanup on all pages: removed builder badge (1×1 spacer GIF, inline styles, mobiri.se links), generator/IE meta, editor-only attributes, unused YouTube-background script, per-page `?v=` CSS cache-busters and redundant preload. Added `lang="en"`, accessible names on icon links, `rel="noopener"`. Screenshots were pixel-identical before/after apart from the removed 64 px badge strip.
 - 2026-09-23: ESLint 10 flat config + typed linting; `tsconfig.json`.
 - 2026-09-23: Kustomize base + `local` / `prod` overlays.
 - 2026-09-23: Live site mirrored into `public/`; Node static server; `npm run export`.

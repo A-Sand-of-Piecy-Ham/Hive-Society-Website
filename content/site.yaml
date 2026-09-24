@@ -1,0 +1,17 @@
+# Site settings: values that pages read instead of hard-coding them. See EDITING.md.
+
+calendar:
+  # The public "Hive Shows - Website Calendar" in the Hive Google account. Every calendar link on the
+  # site (Add to Google Calendar, Apple/Outlook subscribe) is built from this ID.
+  # To find it: Google Calendar → the calendar's ⋮ menu → Settings and sharing → Integrate calendar → Calendar ID.
+  # The calendar must stay "Make available to public" or the links stop working.
+  google-calendar-id: d026f222b3206ab09923386feecd631cb16fbf5ad02be29f797cdc2fac6049b4@group.calendar.google.com
+
+mailing-list:
+  # The Google Form that sign-ups go to. The site's sign-up form sends answers to these question IDs.
+  # A daily check compares them with the live form and fails if a question was deleted or re-created.
+  google-form-id: 1FAIpQLSfBh_LjjkSFeL1cqT6uMG71b2_AFSoz2eOouZFQdM2ZV4QbZg
+  questions:
+    name: 1774114897
+    email: 1519864352
+    interests: 1889493696

@@ -8,5 +8,12 @@ export default defineConfig(
   tseslint.configs.strictTypeChecked,   // or .recommended for syntax-only (faster, no tsconfig needed)
   {
     languageOptions: { parserOptions: { projectService: true } },
+    rules: {
+      // node:test's describe/it return promises the runner tracks itself; awaiting them is wrong.
+      '@typescript-eslint/no-floating-promises': [
+        'error',
+        { allowForKnownSafeCalls: [{ from: 'package', package: 'node:test', name: ['describe', 'it', 'test', 'suite'] }] },
+      ],
+    },
   },
 );
