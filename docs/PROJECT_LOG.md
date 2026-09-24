@@ -42,8 +42,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Theme build step: `content/theme.yaml` → generated `:root { --group-key: … }` CSS (`themeToCssVariables` exists; nothing consumes it yet). Lands with Astro.
 - [ ] Theme validator: also check team `id`s exist in team data. **Blocked** on a team-rename procedure (teams rename about every year or semester). *(Format, kebab-case, list shape, and unique ids are done.)*
 - [ ] Contract-break check (CI): fail if a theme key or content field is removed/renamed without a `!` / `BREAKING CHANGE` PR title.
-- [ ] Contrast check (CI): WCAG AA for each text/background pair (e.g. `buttons.text` on `buttons.background`, each `teams.*`).
-- [ ] Fix `links.text` (`#ffa600` on `#ffeb69` fails contrast).
+- [ ] **Decision needed:** new link colors. `links.text` `#ffa600` on `#ffeb69` is 1.62:1 and `links.hover-text` `#996400` is 4.15:1; both need 4.5:1. Waived in `src/contrast.mts` until chosen; remove the waivers when fixed.
 - [ ] In-browser theme editor with live preview and contrast warnings (Tier 2 in the audit).
 
 ### CMS
@@ -117,6 +116,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-24: Contrast check in CI (`src/contrast.mts` via `validate:theme`, `colorjs.io` for WCAG 2.1 math): 23 text/icon-on-background pairs incl. each team and the translucent nav bar; every theme key must be in a pair; known failures (`links.*`) waived with reasons and printed as warnings.
 - 2026-09-24: Homepage hero capped at 65vh with `object-fit: cover` (the top-of-photo crop was done 2026-09-23).
 - 2026-09-24: Accessibility: `<main id="main">` landmark and a "Skip to content" link on every page, footer marked `role="contentinfo"`; one `<h1>` per page with no skipped heading levels (members/teams had 6 and 9 `<h1>`s; calendar, contact, mailing list had none); non-heading subtitles and class years are no longer headings; readable section anchors (`members.html#alumni`, `#executive-board`, `#active-members`, `teams.html#core-teams`, …) replace generated `article11-*` ids. Layout verified element-by-element identical at 1400 and 390 px.
 - 2026-09-24: "Add to Google Calendar" link verified manually (signed in).

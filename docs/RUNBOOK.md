@@ -69,7 +69,7 @@ The complete list. A test fails if a script in `package.json` isn't in this tabl
 | `npm test` | Runs the automated tests ([§10](#10-tests-and-checks)) | Before every commit |
 | `npm run lint` | Runs ESLint (see below) | Before every commit |
 | `npm run typecheck` | Runs the TypeScript compiler in check-only mode (see below) | Before every commit |
-| `npm run validate:theme` | Checks `content/theme.yaml` follows the color rules | After editing colors |
+| `npm run validate:theme` | Checks `content/theme.yaml` follows the color rules, and that every text/icon color is readable on its background (WCAG contrast; known failures print as warnings) | After editing colors |
 | `npm run check:images` | Checks every image is within the size limits, none are duplicates, and member portraits are named correctly ([§6](#6-images)) | After adding or replacing images |
 | `npm run check:form` | Compares the live Google Form (mailing list) with the settings in `content/site.yaml`. Needs internet | After anyone edits the Google Form, or when the daily check fails |
 
@@ -269,6 +269,7 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 | `tests/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs |
 | `tests/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
 | `tests/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
+| `tests/contrast.test.mts` | Contrast math (WCAG 2.1 ratios, 4.5:1 text, 3:1 large text and icons, see-through backgrounds), that every theme color is in a checked pair, and that the site's colors pass except for listed waivers (and no waiver is left over once fixed) |
 | `tests/theme.test.mts` | The color rules for `theme.yaml`: real hex values only, no color names or references, correct naming, valid team list |
 | `tests/images.test.mts` | Reading image dimensions, and the image rules: per-folder size limits, every class has limits, exceptions need a reason, no duplicates, no leftover exceptions, member portrait and team photo naming |
 | `tests/site-links.test.mts` | Every link and image on every page points to a file that exists |

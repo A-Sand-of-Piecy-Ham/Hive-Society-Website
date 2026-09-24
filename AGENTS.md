@@ -49,6 +49,7 @@ src/app.mts            static site handler: createSiteServer(), resolveFile() (P
 src/server.mts         entry point: env config, listen, SIGTERM
 src/theme.mts          theme.yaml loading, validation, CSS-variable flattening
 src/site.mts           site.yaml loading/validation; named links (calendar-google, calendar-webcal, calendar-ics)
+src/contrast.mts       WCAG contrast pairs + waivers for theme.yaml (run by validate:theme)
 src/images.mts         image policy (site.yaml → image-limits): per-class limits, exceptions, duplicates, folder naming rules
 src/forms.mts          Google Form structure parser + drift comparison
 src/render.mts         shared HTML transform (server + export): fills data-site-link hrefs; export adds ?v=<hash>
@@ -69,6 +70,7 @@ docs/                  RUNBOOK.md (commands/procedures), PROJECT_LOG.md (decisio
 - `teams` is a list of `{ id, background, text }`. `id` matches the team id in the team data.
 - CSS must consume colors only as `var(--group-key)` (e.g. `--navigation-background`, `--teams-usuc-background`), never as hard-coded hex.
 - Renaming or removing a key is a **breaking change** (see Versioning).
+- **Contrast is checked** (`src/contrast.mts`, run by `validate:theme`): each new key must be added to `CONTRAST_PAIRS` with what it's drawn on (a test fails otherwise). Fix failing colors; `CONTRAST_WAIVERS` is only for known, tracked failures and needs a reason.
 
 ### Code
 - TypeScript ESM (`.mts`), strict typed ESLint (`typescript-eslint` `strictTypeChecked`). Prefer Node built-ins over new dependencies; justify any new dependency.
