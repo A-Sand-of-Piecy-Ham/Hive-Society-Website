@@ -175,7 +175,7 @@ Every member's photo goes in **`public/assets/images/members/`**, named after th
 | Lukas "Kukas" Unguraitis | `lukas-unguraitis.jpg` (no nicknames) |
 | A second Alex Kim | `alex-kim-2.jpg` |
 
-Rules: lowercase, words joined by `-`, apostrophes and accents dropped, `.jpg` only, no subfolders. CI rejects anything else (e.g. `IMG_1234.jpg`). The name matters because it will be the member's ID once members are data, so anyone can find a person's photo without looking it up. Set the page's `alt` text to the person's full name. Every portrait is sized for the large (half-width) card, so anyone can be moved into one without a new photo.
+Rules: lowercase, words joined by `-`, apostrophes and accents dropped, `.jpg` only, no subfolders. CI rejects anything else (e.g. `IMG_1234.jpg`). The name matters because it will be the member's ID once members are data, so anyone can find a person's photo without looking it up. Set the page's `alt` text to the person's full name. No photo yet? Point the card at the shared `assets/images/portrait-placeholder.jpg` with `alt="Photo of <Name> coming soon"`; don't copy it per person (duplicate files fail the check). Every portrait is sized for the large (half-width) card, so anyone can be moved into one without a new photo.
 
 ### Team photos
 
