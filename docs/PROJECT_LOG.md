@@ -92,7 +92,8 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Fix its deploy workflow: installs mdBook via rustup on cache miss; `actions/cache@v3` is deprecated.
 
 ### Astro migration
-- [ ] Member data ID = portrait base name (`members/<id>.jpg`); add a test that every member entry has a portrait (or an explicit "no photo") and every portrait belongs to a member.
+- [ ] Member data ID = portrait base name (`members/<id>.jpg`); add a test that every member entry has a portrait (or an explicit "no photo") and every portrait belongs to a member. Same for teams (`teams/<id>.jpg|png`).
+- [ ] Consider tightening `image-limits.portraits` (portraits render small; ~800 px / 150 KB would cut the members page weight) — needs a one-time resize of `members/`.
 - [ ] CMS: member photo uploads go to `public/assets/images/members/` and are named from the member's name (so editors can't upload `IMG_1234.jpg`).
 - [ ] Scaffold Astro (TypeScript strict) alongside the current site; port layout (nav/footer) and one page first to validate the approach.
 - [ ] Content collections + schemas: members, teams, events; theme.yaml → CSS custom properties; site.yaml → settings.
@@ -109,6 +110,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-23: Team photos/logos moved to `public/assets/images/teams/<team-id>.jpg|png` (9 files, ids match `theme.yaml` teams where present), naming enforced by `check:images`; fixed `alt` text (7 of 9 said "DeMarcus Blackington", one named the wrong team). `image-limits` split into per-class sections (`portraits`, `team-photos`, `other`), all required, unknown sections rejected.
 - 2026-09-23: Member portraits moved to `public/assets/images/members/firstname-lastname.jpg` (41 files), naming enforced by `check:images`. Fixed wrong `alt` text on 38 of 41 portraits (Mobirise copy-paste named the wrong person). `site.yaml` key `images` → `image-limits`.
 - 2026-09-23: Image check in CI (`npm run check:images`, `src/images.mts`): 1200 px / 300 KB limits, exceptions with reasons in `content/site.yaml → images`, duplicate detection, stale-exception detection. Hero and social-preview listed as exceptions.
 - 2026-09-23: RUNBOOK rewritten for a basic-developer audience (what lint/typecheck/tests/export do and why; how the pieces fit; versions & releases with every PR-title type and examples; images; roster changes & override; CI explained). Containers/Kubernetes/GHCR/Tunnel moved to optional `docs/CONTAINERIZATION.md` with rationale. Docs test also enforces PR-title types.

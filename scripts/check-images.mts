@@ -1,6 +1,7 @@
 /**
- * CI gate: every image under public/assets/images is within the limits in content/site.yaml → images
- * (or listed as an exception with a reason), and no two files are identical.
+ * CI gate: every image under public/assets/images is within its class's limits in content/site.yaml →
+ * image-limits (or listed as an exception with a reason), portraits and team photos are named by the
+ * rules in src/images.mts, and no two files are identical.
  *
  * Usage: node scripts/check-images.mts
  */

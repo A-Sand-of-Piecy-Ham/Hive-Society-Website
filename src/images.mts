@@ -1,7 +1,8 @@
 /**
- * Image policy for committed images: size limits with per-file exceptions (content/site.yaml →
- * image-limits), no duplicate files, and a naming rule for member portraits. Git keeps every version of every file forever, so an oversized photo
- * that slips in bloats the repository permanently, not just the page.
+ * Image policy for committed images: per-class size limits with per-file exceptions (content/site.yaml
+ * → image-limits), folder naming rules (member portraits, team photos), and no duplicate files. Git
+ * keeps every version of every file forever, so an oversized photo that slips in bloats the
+ * repository permanently, not just the page.
  *
  * Dimensions are read from file headers (PNG IHDR, JPEG SOF, GIF logical screen) instead of pulling
  * in an image library; SVG is vector and only size-checked.
@@ -11,10 +12,54 @@ import { readdir, readFile } from 'node:fs/promises';
 import { extname, join, relative } from 'node:path';
 import { parse } from 'yaml';
 
-export interface ImagePolicy {
+/** Size limits for one class of image. */
+export interface ImageLimits {
   maxLongEdgePx: number;
   maxFileKb: number;
-  /** File name (relative to the images directory) → reason it may exceed the limits. */
+}
+
+export interface ImageClass {
+  /** Section name under `image-limits` in content/site.yaml. */
+  key: string;
+  /** Folder (relative to the images directory) this class owns; undefined = everything not in another class's folder. */
+  folder?: string;
+  /** Required file name inside the folder (no subfolders). */
+  name?: RegExp;
+  /** How to fix a bad name, shown in the error. */
+  nameRule?: string;
+}
+
+/** Everything not in another class's folder, so no image escapes limits. */
+const OTHER: ImageClass = { key: 'other' };
+
+/**
+ * Every image belongs to exactly one class, chosen by its top-level folder. Folders and naming rules
+ * live here rather than in site.yaml because pages (and, later, CMS media folders) depend on them;
+ * only the limits are settings.
+ */
+export const IMAGE_CLASSES: readonly ImageClass[] = [
+  {
+    key: 'portraits',
+    folder: 'members',
+    // firstname-lastname: lowercase ASCII words, at least two, optional -N for a second person with
+    // the same name. Doubles as the member's ID once members are data, so it must be predictable.
+    name: /^[a-z]+(?:-[a-z]+)+(?:-\d+)?\.jpg$/,
+    nameRule: 'member portraits must be named firstname-lastname.jpg (lowercase, hyphens, no subfolders), e.g. members/tess-obrien.jpg.',
+  },
+  {
+    key: 'team-photos',
+    folder: 'teams',
+    // team-id: matches the team's id in content/theme.yaml where it has one. PNG allowed for logos.
+    name: /^[a-z0-9]+(?:-[a-z0-9]+)*\.(?:jpg|png)$/,
+    nameRule: 'team photos must be named after the team, e.g. teams/twist-and-trout.jpg (lowercase, hyphens, .jpg or .png for logos, no subfolders).',
+  },
+  OTHER,
+];
+
+export interface ImagePolicy {
+  /** Class key → limits; every class in IMAGE_CLASSES has an entry. */
+  limits: Partial<Record<string, ImageLimits>>;
+  /** File name (relative to the images directory) → reason it may exceed its class's limits. */
   exceptions: Record<string, string>;
 }
 
@@ -28,15 +73,11 @@ export interface ImageFile {
   sha256: string;
 }
 
-/** Member portraits live in this folder (relative to the images directory), one per person. */
-export const PORTRAIT_DIR = 'members';
-
-/**
- * `firstname-lastname.jpg`: lowercase ASCII words joined by hyphens, at least two words, optional
- * numeric suffix for a second person with the same name. The base name doubles as the member's ID
- * once members are data, so it must be predictable from the person's name.
- */
-const PORTRAIT_NAME = /^[a-z]+(?:-[a-z]+)+(?:-\d+)?\.jpg$/;
+/** The class owning a file, by its top-level folder. */
+export function imageClass(name: string): ImageClass {
+  const top = name.split('/')[0];
+  return IMAGE_CLASSES.find((c) => c.folder !== undefined && c.folder === top) ?? OTHER;
+}
 
 /** JPEG start-of-frame markers (baseline, progressive, lossless, arithmetic variants) carry the dimensions. */
 const JPEG_SOF = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
@@ -87,14 +128,23 @@ export function checkImages(files: readonly ImageFile[], policy: ImagePolicy): s
   const names = new Set(files.map((f) => f.name));
 
   for (const f of files) {
+    const cls = imageClass(f.name);
+    if (cls.name !== undefined && cls.folder !== undefined) {
+      const inFolder = f.name.slice(cls.folder.length + 1);
+      if (inFolder.includes('/') || !cls.name.test(inFolder)) problems.push(`${f.name}: ${cls.nameRule ?? 'bad file name.'}`);
+    }
+
     if (Object.hasOwn(policy.exceptions, f.name)) continue;
+    const limits = policy.limits[cls.key];
+    if (limits === undefined) throw new Error(`no limits for image class "${cls.key}"`);
+    const label = `${cls.key} limit`;
     const longEdge = Math.max(f.width ?? 0, f.height ?? 0);
-    if (longEdge > policy.maxLongEdgePx) {
-      problems.push(`${f.name}: ${String(f.width)}×${String(f.height)} px is over the ${String(policy.maxLongEdgePx)} px limit. Resize it, or add an exception with a reason.`);
+    if (longEdge > limits.maxLongEdgePx) {
+      problems.push(`${f.name}: ${String(f.width)}×${String(f.height)} px is over the ${String(limits.maxLongEdgePx)} px ${label}. Resize it, or add an exception with a reason.`);
     }
     const kb = Math.ceil(f.bytes / 1024);
-    if (kb > policy.maxFileKb) {
-      problems.push(`${f.name}: ${String(kb)} KB is over the ${String(policy.maxFileKb)} KB limit. Re-save as JPEG (quality ~82), or add an exception with a reason.`);
+    if (kb > limits.maxFileKb) {
+      problems.push(`${f.name}: ${String(kb)} KB is over the ${String(limits.maxFileKb)} KB ${label}. Re-save as JPEG (quality ~82), or add an exception with a reason.`);
     }
   }
 
@@ -107,28 +157,31 @@ export function checkImages(files: readonly ImageFile[], policy: ImagePolicy): s
   for (const name of Object.keys(policy.exceptions)) {
     if (!names.has(name)) problems.push(`Exception for "${name}" but no such image. Remove it from content/site.yaml.`);
   }
-
-  for (const f of files) {
-    const [dir, file = '', ...rest] = f.name.split('/');
-    if (dir !== PORTRAIT_DIR) continue;
-    if (rest.length > 0 || !PORTRAIT_NAME.test(file)) {
-      problems.push(`${f.name}: member portraits must be named firstname-lastname.jpg (lowercase, hyphens, no subfolders), e.g. ${PORTRAIT_DIR}/tess-obrien.jpg.`);
-    }
-  }
   return problems;
 }
 
 /** Reads the `image-limits` section of content/site.yaml, naming the bad key on error. */
 export function parseImagePolicy(text: string): ImagePolicy {
-  const images = (parse(text) as Record<string, Record<string, unknown> | undefined> | null)?.['image-limits'];
-  const maxLongEdgePx = images?.['max-long-edge-px'];
-  const maxFileKb = images?.['max-file-kb'];
-  const exceptions: unknown = images?.exceptions ?? {};
-  if (typeof maxLongEdgePx !== 'number' || maxLongEdgePx <= 0) throw new Error('site.yaml: image-limits.max-long-edge-px must be a positive number');
-  if (typeof maxFileKb !== 'number' || maxFileKb <= 0) throw new Error('site.yaml: image-limits.max-file-kb must be a positive number');
+  const section = (parse(text) as Record<string, Record<string, unknown> | undefined> | null)?.['image-limits'] ?? {};
+  const known = [...IMAGE_CLASSES.map((c) => c.key), 'exceptions'];
+  for (const key of Object.keys(section)) {
+    if (!known.includes(key)) throw new Error(`site.yaml: image-limits.${key} is not a known section (expected ${known.join(', ')})`);
+  }
+
+  const limits: Partial<Record<string, ImageLimits>> = {};
+  for (const { key } of IMAGE_CLASSES) {
+    const raw = section[key] as Record<string, unknown> | undefined;
+    const maxLongEdgePx = raw?.['max-long-edge-px'];
+    const maxFileKb = raw?.['max-file-kb'];
+    if (typeof maxLongEdgePx !== 'number' || maxLongEdgePx <= 0) throw new Error(`site.yaml: image-limits.${key}.max-long-edge-px must be a positive number`);
+    if (typeof maxFileKb !== 'number' || maxFileKb <= 0) throw new Error(`site.yaml: image-limits.${key}.max-file-kb must be a positive number`);
+    limits[key] = { maxLongEdgePx, maxFileKb };
+  }
+
+  const exceptions: unknown = section.exceptions ?? {};
   if (typeof exceptions !== 'object' || exceptions === null) throw new Error('site.yaml: image-limits.exceptions must be a map of file path → reason');
   for (const [name, reason] of Object.entries(exceptions)) {
     if (typeof reason !== 'string' || reason.trim() === '') throw new Error(`site.yaml: image-limits.exceptions."${name}" needs a reason`);
   }
-  return { maxLongEdgePx, maxFileKb, exceptions: exceptions as Record<string, string> };
+  return { limits, exceptions: exceptions as Record<string, string> };
 }

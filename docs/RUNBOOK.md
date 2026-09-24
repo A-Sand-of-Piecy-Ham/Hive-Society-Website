@@ -142,11 +142,15 @@ The rule of thumb: **if a change could make the live site behave or look differe
 
 ## 6. Images
 
-**CI rejects oversized or misnamed images.** Limits live in `content/site.yaml` under `image-limits:`:
+**CI rejects oversized or misnamed images.** Every image falls into one class by its folder, and each class has its own limits in `content/site.yaml` under `image-limits:`:
 
-- Max **1200 px** on the longest side.
-- Max **300 KB** per file.
-- No two identical files (reuse the existing one instead).
+| Class (`image-limits:` section) | Folder in `public/assets/images/` | Longest side | File size |
+|---|---|---|---|
+| `portraits` | `members/` | 1200 px | 250 KB |
+| `team-photos` | `teams/` | 1200 px | 250 KB |
+| `other` | anything else | 1200 px | 300 KB |
+
+All three sections are required, so no image goes unchecked; a misspelled section name fails the check. Also: no two identical files (reuse the existing one instead).
 
 Phone photos are around 4000 px and 3–5 MB, so **resize before adding**:
 
@@ -172,7 +176,11 @@ Every member's photo goes in **`public/assets/images/members/`**, named after th
 
 Rules: lowercase, words joined by `-`, apostrophes and accents dropped, `.jpg` only, no subfolders. CI rejects anything else (e.g. `IMG_1234.jpg`). The name matters because it will be the member's ID once members are data, so anyone can find a person's photo without looking it up. Set the page's `alt` text to the person's full name.
 
-**Exceptions** (when an image genuinely needs to be bigger, like a full-width banner): add it under `image-limits: exceptions:` in `content/site.yaml` with a reason:
+### Team photos
+
+Team photos and logos go in **`public/assets/images/teams/`**, named after the team: the team's `id` in `content/theme.yaml` if it has one (e.g. `twist-and-trout.jpg`, `umic.png`), otherwise the team name in lowercase with hyphens (e.g. `purrmuda-triangle.jpg`). `.jpg` for photos, `.png` for logos; no subfolders. Set `alt` to "<Team name> team photo" or "<Team name> logo".
+
+**Exceptions** (when an image genuinely needs to be bigger, like a full-width banner): add it under `image-limits: exceptions:` in `content/site.yaml` with a reason (exceptions skip the size limits, not the naming rules):
 
 ```yaml
 image-limits:
@@ -261,7 +269,7 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 | `test/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
 | `test/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
 | `test/theme.test.mts` | The color rules for `theme.yaml`: real hex values only, no color names or references, correct naming, valid team list |
-| `test/images.test.mts` | Reading image dimensions, and the image rules: size limits, exceptions need a reason, no duplicates, no leftover exceptions, member portrait naming |
+| `test/images.test.mts` | Reading image dimensions, and the image rules: per-folder size limits, every class has limits, exceptions need a reason, no duplicates, no leftover exceptions, member portrait and team photo naming |
 | `test/site-links.test.mts` | Every link and image on every page points to a file that exists |
 | `test/docs.test.mts` | This runbook lists every npm script, every test file, and every allowed PR-title type |
 

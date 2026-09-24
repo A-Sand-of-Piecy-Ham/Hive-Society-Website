@@ -18,11 +18,17 @@ mailing-list:
 
 image-limits:
   # Limits for every image under public/assets/images, checked by `npm run check:images` in CI.
-  # Member portraits also have a naming rule: public/assets/images/members/firstname-lastname.jpg
-  # (see docs/RUNBOOK.md → Images).
-  # Phone photos are ~4000 px and several MB; resize before adding (see docs/RUNBOOK.md → Images).
-  max-long-edge-px: 1200
-  max-file-kb: 300
+  # Each image is limited by the section for its folder; see docs/RUNBOOK.md → Images for
+  # folders, naming rules, and how to resize phone photos (~4000 px, several MB).
+  portraits:   # members/ (member photos, named firstname-lastname.jpg)
+    max-long-edge-px: 1200
+    max-file-kb: 250
+  team-photos: # teams/ (team photos and logos, named after the team)
+    max-long-edge-px: 1200
+    max-file-kb: 250
+  other:       # everything else
+    max-long-edge-px: 1200
+    max-file-kb: 300
   # Exceptions: file path (relative to public/assets/images) → why it needs to be bigger. Every exception is downloaded by visitors,
   # so keep this list short. Entries for files that no longer exist fail the check.
   exceptions:

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { checkImages, parseImagePolicy, rasterSize, type ImageFile } from '../src/images.mts';
+import { checkImages, imageClass, parseImagePolicy, rasterSize, type ImageFile, type ImagePolicy } from '../src/images.mts';
 
 /** Minimal headers: just enough bytes for the dimension parser. */
 function png(w: number, h: number): Buffer {
@@ -16,7 +16,15 @@ function jpeg(w: number, h: number): Buffer {
   return Buffer.concat([Buffer.from([0xff, 0xd8]), app0, sof2]);
 }
 
-const policy = { maxLongEdgePx: 1200, maxFileKb: 300, exceptions: { 'hero.jpg': 'full-width hero' } };
+const policy: ImagePolicy = {
+  limits: {
+    portraits: { maxLongEdgePx: 800, maxFileKb: 150 },
+    'team-photos': { maxLongEdgePx: 1200, maxFileKb: 250 },
+    other: { maxLongEdgePx: 1200, maxFileKb: 300 },
+  },
+  exceptions: { 'hero.jpg': 'full-width hero' },
+};
+const noExceptions: ImagePolicy = { ...policy, exceptions: {} };
 const file = (name: string, width: number, height: number, kb = 100, sha256 = name): ImageFile => ({ name, width, height, bytes: kb * 1024, sha256 });
 
 describe('rasterSize', () => {
@@ -38,10 +46,19 @@ describe('checkImages', () => {
   });
 
   it('flags oversized dimensions and file sizes, naming the file', () => {
-    const problems = checkImages([file('big.jpg', 4032, 3024, 2900)], { ...policy, exceptions: {} });
+    const problems = checkImages([file('big.jpg', 4032, 3024, 2900)], noExceptions);
     assert.equal(problems.length, 2);
-    assert.match(problems[0] ?? '', /^big\.jpg: 4032×3024 px is over the 1200 px limit/);
-    assert.match(problems[1] ?? '', /^big\.jpg: 2900 KB is over the 300 KB limit/);
+    assert.match(problems[0] ?? '', /^big\.jpg: 4032×3024 px is over the 1200 px other limit/);
+    assert.match(problems[1] ?? '', /^big\.jpg: 2900 KB is over the 300 KB other limit/);
+  });
+
+  it("applies each folder's own limits", () => {
+    const problems = checkImages([file('members/tess-obrien.jpg', 1000, 1000, 200), file('teams/umic.png', 1000, 1000, 200)], noExceptions);
+    assert.deepEqual(
+      problems.map((p) => p.split(':')[0]),
+      ['members/tess-obrien.jpg', 'members/tess-obrien.jpg'],
+    );
+    assert.match(problems[0] ?? '', /800 px portraits limit/);
   });
 
   it('flags identical files and stale exceptions', () => {
@@ -51,7 +68,6 @@ describe('checkImages', () => {
 });
 
 describe('member portrait naming', () => {
-  const noExceptions = { ...policy, exceptions: {} };
   const names = (list: string[]): string[] => checkImages(list.map((n) => file(n, 800, 800)), noExceptions);
 
   it('accepts firstname-lastname.jpg, multi-part names, and a numeric suffix', () => {
@@ -65,13 +81,52 @@ describe('member portrait naming', () => {
   });
 
   it('leaves images outside the portraits folder alone', () => {
-    assert.deepEqual(names(['dsc0085.jpg', 'teams/IMG_9.jpg']), []);
+    assert.deepEqual(names(['dsc0085.jpg', 'teams/twist-and-trout.jpg']), []);
+  });
+});
+
+describe('team photo naming', () => {
+  const names = (list: string[]): string[] => checkImages(list.map((n) => file(n, 800, 800)), noExceptions);
+
+  it('accepts team ids, with .png for logos', () => {
+    assert.deepEqual(names(['teams/twist-and-trout.jpg', 'teams/umic.png', 'teams/hive-22-23.jpg']), []);
+  });
+
+  it('rejects camera names, capitals, spaces, .jpeg, and subfolders', () => {
+    const bad = ['teams/IMG_1234.jpg', 'teams/Twist-and-Trout.jpg', 'teams/twist and trout.jpg', 'teams/umic.jpeg', 'teams/2025/umic.png'];
+    assert.equal(names(bad).length, bad.length);
+    assert.match(names(['teams/IMG_1234.jpg'])[0] ?? '', /must be named after the team/);
+  });
+});
+
+describe('imageClass', () => {
+  it('classifies by top-level folder, with everything else as other', () => {
+    assert.equal(imageClass('members/tess-obrien.jpg').key, 'portraits');
+    assert.equal(imageClass('teams/umic.png').key, 'team-photos');
+    assert.equal(imageClass('hero.jpg').key, 'other');
+    assert.equal(imageClass('logos/umic.png').key, 'other');
+    assert.equal(imageClass('teams.jpg').key, 'other');
   });
 });
 
 describe('parseImagePolicy', () => {
+  const limits = (px: number, kb: number): string => `    max-long-edge-px: ${String(px)}\n    max-file-kb: ${String(kb)}\n`;
+  const all = `image-limits:\n  portraits:\n${limits(800, 150)}  team-photos:\n${limits(1200, 250)}  other:\n${limits(1200, 300)}`;
+
+  it('reads limits for every class', () => {
+    assert.deepEqual(parseImagePolicy(all), { limits: policy.limits, exceptions: {} });
+  });
+
+  it('requires every class, so no image goes unlimited', () => {
+    const missing = all.replace(/ {2}other:\n.*/s, '');
+    assert.throws(() => parseImagePolicy(missing), /image-limits\.other\.max-long-edge-px must be a positive number/);
+  });
+
+  it('rejects unknown sections, catching typos', () => {
+    assert.throws(() => parseImagePolicy(`${all}  portrait:\n${limits(1, 1)}`), /image-limits\.portrait is not a known section/);
+  });
+
   it('requires a reason for every exception', () => {
-    const yaml = 'image-limits:\n  max-long-edge-px: 1200\n  max-file-kb: 300\n  exceptions:\n    x.jpg: ""';
-    assert.throws(() => parseImagePolicy(yaml), /image-limits\.exceptions\."x\.jpg" needs a reason/);
+    assert.throws(() => parseImagePolicy(`${all}  exceptions:\n    x.jpg: ""`), /image-limits\.exceptions\."x\.jpg" needs a reason/);
   });
 });
