@@ -110,7 +110,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] `src/forms.mts` (scraping the Google Form's `FB_PUBLIC_LOAD_DATA_`): the official **Google Forms API** (`googleapis`, `forms.get`) returns question IDs reliably, but needs a service account with access to the form. Scraping needs no credentials; revisit if Google changes the page format.
 - [ ] Calendar links: **calendar-link** generates per-event add-to-calendar links (Google/Outlook/ICS) for the planned calendar page. Subscription links (`calendarLinks`) are simple enough to keep.
 - [ ] Planned work, use a library from the start: ICS parsing → **node-ical**; contrast check → **colorjs.io** (`contrastWCAG21`; `wcag-contrast` is unmaintained since 2022).
-- [ ] Vendored front-end: Bootstrap is **5.0.1** (2021); update or drop with Astro. `vendor/smooth-scroll` hijacks mouse-wheel scrolling (an accessibility/UX anti-pattern); replace with CSS `scroll-behavior: smooth` for in-page links, or remove.
+- [ ] Vendored front-end: Bootstrap is **5.0.1** (2021); update or drop with Astro.
 
 ### Housekeeping
 - [ ] **On hold:** create the GitHub remote; enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push). A private repo on GitHub Free can't enforce it: get GitHub Pro (Student Developer Pack) or host under an org on Team.
@@ -119,6 +119,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-24: Removed `vendor/smooth-scroll` (Mobirise's bundled wheel-scroll smoother: it replaced native mouse-wheel/keyboard scrolling with scripted animation, which fights OS scroll settings and reduced-motion preferences). Bootstrap's reboot already sets `scroll-behavior: smooth` for in-page links, respecting `prefers-reduced-motion`.
 - 2026-09-24: `public/assets/` reorganized: third-party libraries under `vendor/` (bootstrap, navbar-dropdown, smooth-scroll), site stylesheets under `css/` (`base.css` ← `theme/css/style.css`, `sections.css` ← `mobirise/css/mbr-additional.css`, `overrides.css` ← `site/overrides.css`). No Mobirise-named paths remain.
 - 2026-09-24: Removed unused Mobirise runtime: `mobirise2` icon font (no icons used), `theme/js/script.js` (none of its features' markup present; nav toggle and dropdown verified without it), leftover `data-slide-to` attributes. Socicon font (732 KB for 5 icons) replaced by inline SVGs of the same glyphs (`.social-icon` in `overrides.css`); icon positions verified unchanged within 1 px at desktop and phone widths. ~1 MB less per first page load.
 - 2026-09-24: Roster updated: new Executive Board (co-presidents, VP, secretary, treasurer, membership director), aux-board roles noted on member cards, 15 new members with a shared placeholder photo, Chang Zhou restored to Active (missed last year; original photo and quip), 13 former members moved to Alumni. Alumni portraits kept for now (removal planned later). Active members merged into one gallery; 3 empty leftover alumni cards removed.
