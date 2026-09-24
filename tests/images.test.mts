@@ -5,7 +5,9 @@ import { checkImages, imageClass, parseImagePolicy, rasterSize, type ImageFile, 
 /** Minimal headers: just enough bytes for the dimension parser. */
 function png(w: number, h: number): Buffer {
   const b = Buffer.alloc(24);
-  b.writeUInt32BE(0x89504e47, 0);
+  b.writeUInt32BE(0x89504e47, 0); // PNG signature, first half
+  b.writeUInt32BE(0x0d0a1a0a, 4); // second half
+  b.write('IHDR', 12, 'ascii');
   b.writeUInt32BE(w, 16);
   b.writeUInt32BE(h, 20);
   return b;
@@ -36,7 +38,7 @@ describe('rasterSize', () => {
   });
 
   it('rejects formats it cannot measure', () => {
-    assert.throws(() => rasterSize(Buffer.from('RIFF....WEBP')), /unsupported image format/);
+    assert.throws(() => rasterSize(Buffer.from('not an image')), /unreadable or unsupported image/);
   });
 });
 

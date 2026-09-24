@@ -4,12 +4,13 @@
  * keeps every version of every file forever, so an oversized photo that slips in bloats the
  * repository permanently, not just the page.
  *
- * Dimensions are read from file headers (PNG IHDR, JPEG SOF, GIF logical screen) instead of pulling
- * in an image library; SVG is vector and only size-checked.
+ * Dimensions come from file headers via `image-size` (no decoding); SVG is vector, so only its file
+ * size is checked.
  */
 import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import { extname, join, relative } from 'node:path';
+import { imageSize } from 'image-size';
 import { parse } from 'yaml';
 
 /** Size limits for one class of image. */
@@ -79,32 +80,18 @@ export function imageClass(name: string): ImageClass {
   return IMAGE_CLASSES.find((c) => c.folder !== undefined && c.folder === top) ?? OTHER;
 }
 
-/** JPEG start-of-frame markers (baseline, progressive, lossless, arithmetic variants) carry the dimensions. */
-const JPEG_SOF = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
-
-/** Returns pixel dimensions for PNG, JPEG, or GIF data; throws for anything else it can't read. */
-export function rasterSize(data: Buffer): { width: number; height: number } {
-  if (data.length >= 24 && data.readUInt32BE(0) === 0x89504e47) {
-    return { width: data.readUInt32BE(16), height: data.readUInt32BE(20) };
+/**
+ * Pixel dimensions of a raster image (JPEG, PNG, GIF, WebP, AVIF, …), read from its header by
+ * `image-size` without decoding. Throws with a readable message for anything it can't read.
+ */
+export function rasterSize(data: Uint8Array): { width: number; height: number } {
+  let size: ReturnType<typeof imageSize>;
+  try {
+    size = imageSize(data);
+  } catch (error) {
+    throw new Error(`unreadable or unsupported image (${(error as Error).message}); use JPEG, PNG, WebP, GIF, or SVG`, { cause: error });
   }
-  if (data.length >= 10 && data.toString('ascii', 0, 3) === 'GIF') {
-    return { width: data.readUInt16LE(6), height: data.readUInt16LE(8) };
-  }
-  if (data.length >= 4 && data[0] === 0xff && data[1] === 0xd8) {
-    let i = 2;
-    while (i + 9 < data.length) {
-      if (data[i] !== 0xff) throw new Error('corrupt JPEG: expected a marker');
-      const marker = data[i + 1] ?? 0;
-      if (marker === 0xff) {
-        i += 1; // fill byte
-        continue;
-      }
-      if (JPEG_SOF.has(marker)) return { height: data.readUInt16BE(i + 5), width: data.readUInt16BE(i + 7) };
-      i += 2 + data.readUInt16BE(i + 2);
-    }
-    throw new Error('corrupt JPEG: no frame header');
-  }
-  throw new Error('unsupported image format (use JPEG, PNG, GIF, or SVG)');
+  return { width: size.width, height: size.height };
 }
 
 export async function scanImages(dir: string): Promise<ImageFile[]> {

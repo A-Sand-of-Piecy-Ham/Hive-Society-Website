@@ -98,7 +98,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 Prefer an existing, maintained package over our own code where it fits. Versions checked on npm 2026-09-24. Many of these come free with Astro, so most swaps should happen *as part of* the migration rather than before it.
 - [ ] `src/theme.mts` (YAML tokens → CSS variables): **Style Dictionary** (`style-dictionary` 5.x, the standard design-token build tool; outputs CSS custom properties) or **Terrazzo** (`@terrazzo/cli`, W3C Design Tokens format). Our semantic-key rules (no palette names, literal hex only) would become a custom validator/format on top; the flattening and CSS output go away.
 - [ ] Settings/theme validation (`parseSite`, `parseImagePolicy`, `validateTheme` shape checks): a schema library, **Zod** (4.x; what Astro content collections use natively) or **Valibot**/**Ajv** (JSON Schema, which also gives editors YAML autocomplete via the YAML language server). Error messages naming the bad key come built in.
-- [ ] `src/images.mts` dimension parsing: **image-size** (reads PNG/JPEG/GIF/WebP/AVIF headers). Resizing/format conversion (planned AVIF/WebP): **sharp**, or Astro's `astro:assets`, which uses it. Folder naming rules: **ls-lint** (`@ls-lint/ls-lint`, a file-name linter configured in `.ls-lint.yml`). Size limits and duplicate detection have no standard tool; keep ours.
+- [x] ~~`src/images.mts` dimension parsing~~ → **image-size** (done 2026-09-24). Resizing/format conversion (planned AVIF/WebP): **sharp**, or Astro's `astro:assets`, which uses it. Folder naming rules: **ls-lint** (`@ls-lint/ls-lint`, a file-name linter configured in `.ls-lint.yml`). Size limits and duplicate detection have no standard tool; keep ours.
 - [ ] `src/app.mts` static server (Pages-style URLs, cache headers, 304s): **wrangler** `pages dev` emulates Cloudflare Pages exactly (including `_headers`); for the container, **sirv** or **serve-static** handle ETag/Last-Modified and clean URLs. Astro's dev server replaces the dev path entirely.
 - [ ] `src/render.mts` asset fingerprinting + `data-site-link` filling: built into Astro/Vite (hashed asset names; settings read in templates). Nothing to adopt before then.
 - [ ] `scripts/export.mts` sitemap: **@astrojs/sitemap** (or `sitemap` without Astro).
@@ -115,6 +115,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-24: `check:images` reads dimensions with `image-size` instead of our PNG/JPEG/GIF header parser; WebP and AVIF are now measurable too.
 - 2026-09-24: Bootstrap 5.0.1 → 5.3.8 (vendored dist files replaced wholesale). Verified on all pages at 1400/390 px: element geometry identical, only invisible inherited colors on navbar wrappers changed; mobile menu and dropdown work; no console errors.
 - 2026-09-24: Contrast check in CI (`src/contrast.mts` via `validate:theme`, `colorjs.io` for WCAG 2.1 math): 23 text/icon-on-background pairs incl. each team and the translucent nav bar; every theme key must be in a pair; known failures (`links.*`) waived with reasons and printed as warnings.
 - 2026-09-24: Homepage hero capped at 65vh with `object-fit: cover` (the top-of-photo crop was done 2026-09-23).
