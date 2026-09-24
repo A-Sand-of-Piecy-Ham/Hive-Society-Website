@@ -81,3 +81,7 @@ section.contacts03 .calendar-subscribe .btn {
    replace, so the per-section .mbr-iconfont rules (font-size, color) still apply. */
 .social-icon { display: inline-block; line-height: 0; vertical-align: -0.0625em; } /* glyph descent was 64/1024 em */
 .social-icon > svg { display: block; width: 1em; height: 1em; fill: currentColor; }
+/* The glyphs fill their em box edge to edge, so at the section font sizes they read small: nav icons
+   (24px) looked undersized next to the logo, and footer icons (32px) left the 72px bubbles mostly empty. */
+.iconfont-wrapper .social-icon > svg { width: 1.25em; height: 1.25em; }
+.soc-item .social-icon > svg { width: 1.3em; height: 1.3em; }
