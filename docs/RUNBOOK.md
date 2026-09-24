@@ -146,7 +146,7 @@ The rule of thumb: **if a change could make the live site behave or look differe
 
 | Class (`image-limits:` section) | Folder in `public/assets/images/` | Longest side | File size |
 |---|---|---|---|
-| `portraits` | `members/` | 1200 px | 250 KB |
+| `portraits` | `members/` | 1080 px | 225 KB |
 | `team-photos` | `teams/` | 1200 px | 250 KB |
 | `other` | anything else | 1200 px | 300 KB |
 
@@ -156,6 +156,7 @@ Phone photos are around 4000 px and 3–5 MB, so **resize before adding**:
 
 ```bash
 convert photo.jpg -auto-orient -resize '1200x1200>' -strip -quality 82 -interlace JPEG photo-small.jpg
+convert photo.jpg -auto-orient -resize '1080x1080>' -strip -quality 82 -interlace JPEG firstname-lastname.jpg   # member portraits
 npm run check:images
 ```
 
@@ -174,11 +175,11 @@ Every member's photo goes in **`public/assets/images/members/`**, named after th
 | Lukas "Kukas" Unguraitis | `lukas-unguraitis.jpg` (no nicknames) |
 | A second Alex Kim | `alex-kim-2.jpg` |
 
-Rules: lowercase, words joined by `-`, apostrophes and accents dropped, `.jpg` only, no subfolders. CI rejects anything else (e.g. `IMG_1234.jpg`). The name matters because it will be the member's ID once members are data, so anyone can find a person's photo without looking it up. Set the page's `alt` text to the person's full name.
+Rules: lowercase, words joined by `-`, apostrophes and accents dropped, `.jpg` only, no subfolders. CI rejects anything else (e.g. `IMG_1234.jpg`). The name matters because it will be the member's ID once members are data, so anyone can find a person's photo without looking it up. Set the page's `alt` text to the person's full name. Every portrait is sized for the large (half-width) card, so anyone can be moved into one without a new photo.
 
 ### Team photos
 
-Team photos and logos go in **`public/assets/images/teams/`**, named after the team: the team's `id` in `content/theme.yaml` if it has one (e.g. `twist-and-trout.jpg`, `umic.png`), otherwise the team name in lowercase with hyphens (e.g. `purrmuda-triangle.jpg`). `.jpg` for photos, `.png` for logos; no subfolders. Set `alt` to "<Team name> team photo" or "<Team name> logo".
+Team photos and logos go in **`public/assets/images/teams/`**, named after the team: the team's `id` in `content/theme.yaml` if it has one (e.g. `twist-and-trout.jpg`, `umic.png`), otherwise the team name in lowercase with hyphens (e.g. `purrmuda-triangle.jpg`). When a team renames, rename its photo (and its `theme.yaml` id) in the same change. CI checks the name's format only, not that it matches a current team, because teams rename about once a year. `.jpg` for photos, `.png` for logos; no subfolders. Set `alt` to "<Team name> team photo" or "<Team name> logo".
 
 **Exceptions** (when an image genuinely needs to be bigger, like a full-width banner): add it under `image-limits: exceptions:` in `content/site.yaml` with a reason (exceptions skip the size limits, not the naming rules):
 
