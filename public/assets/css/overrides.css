@@ -24,12 +24,21 @@ main > section:last-child {
   flex-grow: 1;
 }
 
-/* Footer: Mobirise pads 6rem top and bottom, leaving ~1.5cm of empty purple under the copyright. */
+/* Footer: Mobirise pads 6rem top and bottom, leaving ~1.5cm of empty purple under the copyright.
+   Its menu links were 32px (display-5) with 16px under each, and the copyright 22px (display-7),
+   so the footer outweighed the page. Social icon bubbles keep their size. */
 section.footer3 {
-  padding-top: 2.5rem;
-  padding-bottom: 1.5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.25rem;
+}
+section.footer3 .header-menu-item {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  padding-bottom: 0;
 }
 section.footer3 .copyright {
+  font-size: 0.875rem;
+  line-height: 1.5;
   margin-bottom: 0;
 }
 
