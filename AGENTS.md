@@ -47,7 +47,7 @@ src/app.mts            static site handler: createSiteServer(), resolveFile() (P
 src/server.mts         entry point: env config, listen, SIGTERM
 src/theme.mts          theme.yaml loading, validation, CSS-variable flattening
 src/site.mts           site.yaml loading/validation; named links (calendar-google, calendar-webcal, calendar-ics)
-src/images.mts         image policy (site.yaml → images): size limits, exceptions, duplicates
+src/images.mts         image policy (site.yaml → image-limits): size limits, exceptions, duplicates, portrait naming
 src/forms.mts          Google Form structure parser + drift comparison
 src/render.mts         shared HTML transform (server + export): fills data-site-link hrefs; export adds ?v=<hash>
 scripts/export.mts     public/ → dist/ + robots.txt, sitemap.xml, _headers
@@ -77,7 +77,8 @@ docs/                  RUNBOOK.md (commands/procedures), PROJECT_LOG.md (decisio
 - `public/` is vendored Mobirise output. Don't reformat it wholesale. Make targeted edits only; it's being replaced by templates. Put layout fixes in `public/assets/site/overrides.css`, targeting block-type classes (`footer3`, `contacts01`) rather than `cid-*` hashes.
 - **Never hard-code values that live in settings.** Links built from settings go in markup as `<a data-site-link="<name>" href="#">`; `renderPage` fills them from `src/site.mts`, and an unknown name fails the render. New settings go in `content/site.yaml` + `parseSite()` + a test.
 - Caching: the export fingerprints every `assets/…` reference in HTML (`?v=<sha256 prefix>`), and `/assets/*` is served `immutable` for a year. Files referenced only from CSS (fonts) aren't fingerprinted, so never modify one in place; add a new filename. The dev server revalidates un-hashed files, so a normal reload shows edits.
-- **Images committed to the repo:** enforced by `npm run check:images` (limits and exceptions in `content/site.yaml` → `images`). JPEG, at most 1200 px on the long edge, quality ~82, progressive, metadata stripped; larger only via an exception with a reason. Use PNG only for logos or images that need transparency. Git history keeps every version of a file forever, so optimize *before* committing. Example: `convert in.png -auto-orient -resize '1200x1200>' -strip -quality 82 -interlace JPEG out.jpg`. Don't commit duplicate files; reference one shared file instead (e.g. every page's `og:image` is `assets/images/social-preview.png`, as an absolute URL).
+- **Member portraits:** `public/assets/images/members/<firstname-lastname>.jpg` (lowercase, hyphens, no nicknames/apostrophes/accents, `-2` for a duplicate name), `alt` = full name. Enforced by `check:images`. The base name is the member's future data ID.
+- **Images committed to the repo:** enforced by `npm run check:images` (limits and exceptions in `content/site.yaml` → `image-limits`). JPEG, at most 1200 px on the long edge, quality ~82, progressive, metadata stripped; larger only via an exception with a reason. Use PNG only for logos or images that need transparency. Git history keeps every version of a file forever, so optimize *before* committing. Example: `convert in.png -auto-orient -resize '1200x1200>' -strip -quality 82 -interlace JPEG out.jpg`. Don't commit duplicate files; reference one shared file instead (e.g. every page's `og:image` is `assets/images/social-preview.png`, as an absolute URL).
 
 ### Commits, PRs, and versioning
 `main` is branch-protected: **all changes go through a PR on a branch**, required CI checks must pass before merge, and PRs are squash-merged. Never commit or push to `main` directly, and never bypass or weaken protection or required checks to get a change in. If a check is wrong, fix the check in its own PR.

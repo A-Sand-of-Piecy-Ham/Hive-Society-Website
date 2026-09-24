@@ -16,12 +16,14 @@ mailing-list:
     email: 1519864352
     interests: 1889493696
 
-images:
+image-limits:
   # Limits for every image under public/assets/images, checked by `npm run check:images` in CI.
+  # Member portraits also have a naming rule: public/assets/images/members/firstname-lastname.jpg
+  # (see docs/RUNBOOK.md → Images).
   # Phone photos are ~4000 px and several MB; resize before adding (see docs/RUNBOOK.md → Images).
   max-long-edge-px: 1200
   max-file-kb: 300
-  # Exceptions: file name → why it needs to be bigger. Every exception is downloaded by visitors,
+  # Exceptions: file path (relative to public/assets/images) → why it needs to be bigger. Every exception is downloaded by visitors,
   # so keep this list short. Entries for files that no longer exist fail the check.
   exceptions:
     screenshot-2025-12-09-at-1.40.39pm.jpg: Full-width homepage hero; needs 1920 px to stay sharp on large screens

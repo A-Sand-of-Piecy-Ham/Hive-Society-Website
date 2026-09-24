@@ -50,7 +50,8 @@ public/ (pages) ─┼─► npm start           → local preview, http://local
 ```
 
 - **`public/`**: the site's pages, images, and styles. (Being replaced by the Astro version; see the README.)
-- **`content/theme.yaml`**: every color on the site. **`content/site.yaml`**: settings that pages read (calendar, mailing-list form, image limits).
+- **`content/theme.yaml`**: every color on the site. **`content/site.yaml`**: settings that pages read (calendar, mailing-list form) and image limits.
+- **`public/assets/images/members/`**: one portrait per member, `firstname-lastname.jpg` ([§6](#member-portraits)).
 - **`src/`**: the small Node server behind `npm start`, and the code that reads the YAML files.
 - **`scripts/`**: the export and the checks that CI runs.
 - **`test/`**: automated tests ([§10](#10-tests-and-checks)).
@@ -69,7 +70,7 @@ The complete list. A test fails if a script in `package.json` isn't in this tabl
 | `npm run lint` | Runs ESLint (see below) | Before every commit |
 | `npm run typecheck` | Runs the TypeScript compiler in check-only mode (see below) | Before every commit |
 | `npm run validate:theme` | Checks `content/theme.yaml` follows the color rules | After editing colors |
-| `npm run check:images` | Checks every image is within the size limits and none are duplicates ([§6](#6-images)) | After adding or replacing images |
+| `npm run check:images` | Checks every image is within the size limits, none are duplicates, and member portraits are named correctly ([§6](#6-images)) | After adding or replacing images |
 | `npm run check:form` | Compares the live Google Form (mailing list) with the settings in `content/site.yaml`. Needs internet | After anyone edits the Google Form, or when the daily check fails |
 
 **What these checks are for**, if you haven't used them before:
@@ -141,7 +142,7 @@ The rule of thumb: **if a change could make the live site behave or look differe
 
 ## 6. Images
 
-**CI rejects oversized images.** Limits live in `content/site.yaml` under `images:`:
+**CI rejects oversized or misnamed images.** Limits live in `content/site.yaml` under `image-limits:`:
 
 - Max **1200 px** on the longest side.
 - Max **300 KB** per file.
@@ -158,10 +159,23 @@ npm run check:images
 
 Use JPEG for photos, PNG only for logos or anything that needs transparency.
 
-**Exceptions** (when an image genuinely needs to be bigger, like a full-width banner): add it under `images: exceptions:` in `content/site.yaml` with a reason:
+### Member portraits
+
+Every member's photo goes in **`public/assets/images/members/`**, named after the person:
+
+| Name | File |
+|---|---|
+| Tess O'Brien | `tess-obrien.jpg` |
+| Aiden Garland-Sutter | `aiden-garland-sutter.jpg` |
+| Lukas "Kukas" Unguraitis | `lukas-unguraitis.jpg` (no nicknames) |
+| A second Alex Kim | `alex-kim-2.jpg` |
+
+Rules: lowercase, words joined by `-`, apostrophes and accents dropped, `.jpg` only, no subfolders. CI rejects anything else (e.g. `IMG_1234.jpg`). The name matters because it will be the member's ID once members are data, so anyone can find a person's photo without looking it up. Set the page's `alt` text to the person's full name.
+
+**Exceptions** (when an image genuinely needs to be bigger, like a full-width banner): add it under `image-limits: exceptions:` in `content/site.yaml` with a reason:
 
 ```yaml
-images:
+image-limits:
   exceptions:
     new-banner.jpg: Full-width banner on the About page; 1920 px needed on large screens
 ```
@@ -247,7 +261,7 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 | `test/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
 | `test/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
 | `test/theme.test.mts` | The color rules for `theme.yaml`: real hex values only, no color names or references, correct naming, valid team list |
-| `test/images.test.mts` | Reading image dimensions, and the image rules: size limits, exceptions need a reason, no duplicates, no leftover exceptions |
+| `test/images.test.mts` | Reading image dimensions, and the image rules: size limits, exceptions need a reason, no duplicates, no leftover exceptions, member portrait naming |
 | `test/site-links.test.mts` | Every link and image on every page points to a file that exists |
 | `test/docs.test.mts` | This runbook lists every npm script, every test file, and every allowed PR-title type |
 
@@ -282,7 +296,7 @@ Open the failed check on the PR and read the log; every check prints what's wron
 | Lint | ESLint found a likely bug or style problem | Run `npm run lint` locally; `npm run lint -- --fix` fixes most |
 | Typecheck | A value is used inconsistently with its type | Run `npm run typecheck`; the message names the file and line |
 | Validate theme.yaml | A color isn't a hex value, a key is misnamed, or a team entry is malformed | The message names the exact key in `content/theme.yaml` |
-| Check image sizes | An image is too large, duplicated, or an exception is stale | Resize ([§6](#6-images)), reuse the existing file, or add/remove an exception |
+| Check image sizes | An image is too large, duplicated, a member portrait is misnamed, or an exception is stale | Resize or rename ([§6](#6-images)), reuse the existing file, or add/remove an exception |
 | Test: *local links and assets resolve* | A page points to a file that doesn't exist | The failure lists the missing paths |
 | Test: *docs/RUNBOOK.md …* | A script, test file, or PR type was added without documenting it here | Add the row to [§3](#3-npm-scripts), [§10](#10-tests-and-checks), or [§5](#5-versions-and-releases) |
 | **Kubernetes manifests** / **Container image** | The optional container setup broke | See [CONTAINERIZATION.md](CONTAINERIZATION.md#when-its-checks-fail) |

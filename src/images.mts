@@ -1,6 +1,6 @@
 /**
- * Image policy for committed images: size limits, per-file exceptions (content/site.yaml → images),
- * and no duplicate files. Git keeps every version of every file forever, so an oversized photo
+ * Image policy for committed images: size limits with per-file exceptions (content/site.yaml →
+ * image-limits), no duplicate files, and a naming rule for member portraits. Git keeps every version of every file forever, so an oversized photo
  * that slips in bloats the repository permanently, not just the page.
  *
  * Dimensions are read from file headers (PNG IHDR, JPEG SOF, GIF logical screen) instead of pulling
@@ -27,6 +27,16 @@ export interface ImageFile {
   height?: number;
   sha256: string;
 }
+
+/** Member portraits live in this folder (relative to the images directory), one per person. */
+export const PORTRAIT_DIR = 'members';
+
+/**
+ * `firstname-lastname.jpg`: lowercase ASCII words joined by hyphens, at least two words, optional
+ * numeric suffix for a second person with the same name. The base name doubles as the member's ID
+ * once members are data, so it must be predictable from the person's name.
+ */
+const PORTRAIT_NAME = /^[a-z]+(?:-[a-z]+)+(?:-\d+)?\.jpg$/;
 
 /** JPEG start-of-frame markers (baseline, progressive, lossless, arithmetic variants) carry the dimensions. */
 const JPEG_SOF = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
@@ -97,20 +107,28 @@ export function checkImages(files: readonly ImageFile[], policy: ImagePolicy): s
   for (const name of Object.keys(policy.exceptions)) {
     if (!names.has(name)) problems.push(`Exception for "${name}" but no such image. Remove it from content/site.yaml.`);
   }
+
+  for (const f of files) {
+    const [dir, file = '', ...rest] = f.name.split('/');
+    if (dir !== PORTRAIT_DIR) continue;
+    if (rest.length > 0 || !PORTRAIT_NAME.test(file)) {
+      problems.push(`${f.name}: member portraits must be named firstname-lastname.jpg (lowercase, hyphens, no subfolders), e.g. ${PORTRAIT_DIR}/tess-obrien.jpg.`);
+    }
+  }
   return problems;
 }
 
-/** Reads the `images` section of content/site.yaml, naming the bad key on error. */
+/** Reads the `image-limits` section of content/site.yaml, naming the bad key on error. */
 export function parseImagePolicy(text: string): ImagePolicy {
-  const images = (parse(text) as { images?: Record<string, unknown> } | null)?.images;
+  const images = (parse(text) as Record<string, Record<string, unknown> | undefined> | null)?.['image-limits'];
   const maxLongEdgePx = images?.['max-long-edge-px'];
   const maxFileKb = images?.['max-file-kb'];
   const exceptions: unknown = images?.exceptions ?? {};
-  if (typeof maxLongEdgePx !== 'number' || maxLongEdgePx <= 0) throw new Error('site.yaml: images.max-long-edge-px must be a positive number');
-  if (typeof maxFileKb !== 'number' || maxFileKb <= 0) throw new Error('site.yaml: images.max-file-kb must be a positive number');
-  if (typeof exceptions !== 'object' || exceptions === null) throw new Error('site.yaml: images.exceptions must be a map of file name → reason');
+  if (typeof maxLongEdgePx !== 'number' || maxLongEdgePx <= 0) throw new Error('site.yaml: image-limits.max-long-edge-px must be a positive number');
+  if (typeof maxFileKb !== 'number' || maxFileKb <= 0) throw new Error('site.yaml: image-limits.max-file-kb must be a positive number');
+  if (typeof exceptions !== 'object' || exceptions === null) throw new Error('site.yaml: image-limits.exceptions must be a map of file path → reason');
   for (const [name, reason] of Object.entries(exceptions)) {
-    if (typeof reason !== 'string' || reason.trim() === '') throw new Error(`site.yaml: images.exceptions."${name}" needs a reason`);
+    if (typeof reason !== 'string' || reason.trim() === '') throw new Error(`site.yaml: image-limits.exceptions."${name}" needs a reason`);
   }
   return { maxLongEdgePx, maxFileKb, exceptions: exceptions as Record<string, string> };
 }

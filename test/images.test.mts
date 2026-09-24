@@ -50,9 +50,28 @@ describe('checkImages', () => {
   });
 });
 
+describe('member portrait naming', () => {
+  const noExceptions = { ...policy, exceptions: {} };
+  const names = (list: string[]): string[] => checkImages(list.map((n) => file(n, 800, 800)), noExceptions);
+
+  it('accepts firstname-lastname.jpg, multi-part names, and a numeric suffix', () => {
+    assert.deepEqual(names(['members/tess-obrien.jpg', 'members/aiden-garland-sutter.jpg', 'members/alex-kim-2.jpg']), []);
+  });
+
+  it('rejects camera names, capitals, single names, other extensions, and subfolders', () => {
+    const bad = ['members/IMG_1234.jpg', 'members/Tess-OBrien.jpg', 'members/colin.jpg', 'members/tess-obrien.jpeg', 'members/2025/tess-obrien.jpg'];
+    assert.equal(names(bad).length, bad.length);
+    assert.match(names(['members/IMG_1234.jpg'])[0] ?? '', /must be named firstname-lastname\.jpg/);
+  });
+
+  it('leaves images outside the portraits folder alone', () => {
+    assert.deepEqual(names(['dsc0085.jpg', 'teams/IMG_9.jpg']), []);
+  });
+});
+
 describe('parseImagePolicy', () => {
   it('requires a reason for every exception', () => {
-    const yaml = 'images:\n  max-long-edge-px: 1200\n  max-file-kb: 300\n  exceptions:\n    x.jpg: ""';
-    assert.throws(() => parseImagePolicy(yaml), /exceptions\."x\.jpg" needs a reason/);
+    const yaml = 'image-limits:\n  max-long-edge-px: 1200\n  max-file-kb: 300\n  exceptions:\n    x.jpg: ""';
+    assert.throws(() => parseImagePolicy(yaml), /image-limits\.exceptions\."x\.jpg" needs a reason/);
   });
 });

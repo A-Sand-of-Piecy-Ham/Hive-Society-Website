@@ -92,6 +92,8 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Fix its deploy workflow: installs mdBook via rustup on cache miss; `actions/cache@v3` is deprecated.
 
 ### Astro migration
+- [ ] Member data ID = portrait base name (`members/<id>.jpg`); add a test that every member entry has a portrait (or an explicit "no photo") and every portrait belongs to a member.
+- [ ] CMS: member photo uploads go to `public/assets/images/members/` and are named from the member's name (so editors can't upload `IMG_1234.jpg`).
 - [ ] Scaffold Astro (TypeScript strict) alongside the current site; port layout (nav/footer) and one page first to validate the approach.
 - [ ] Content collections + schemas: members, teams, events; theme.yaml → CSS custom properties; site.yaml → settings.
 - [ ] Port pages; retire `public/` Mobirise pages, `src/render.mts` fingerprinting, and `overrides.css`.
@@ -107,6 +109,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-23: Member portraits moved to `public/assets/images/members/firstname-lastname.jpg` (41 files), naming enforced by `check:images`. Fixed wrong `alt` text on 38 of 41 portraits (Mobirise copy-paste named the wrong person). `site.yaml` key `images` → `image-limits`.
 - 2026-09-23: Image check in CI (`npm run check:images`, `src/images.mts`): 1200 px / 300 KB limits, exceptions with reasons in `content/site.yaml → images`, duplicate detection, stale-exception detection. Hero and social-preview listed as exceptions.
 - 2026-09-23: RUNBOOK rewritten for a basic-developer audience (what lint/typecheck/tests/export do and why; how the pieces fit; versions & releases with every PR-title type and examples; images; roster changes & override; CI explained). Containers/Kubernetes/GHCR/Tunnel moved to optional `docs/CONTAINERIZATION.md` with rationale. Docs test also enforces PR-title types.
 - 2026-09-23: RUNBOOK §6 "Tests and checks": every test file (what it guarantees, case count), every CI job (runs / when / blocks merging), coverage gaps. Docs test now also requires each test file to be listed.
