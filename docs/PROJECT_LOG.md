@@ -74,12 +74,10 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] **Homepage "Next show" (on hold):** next upcoming show from the same data replaces "Come See Us!"; falls back to it when nothing is scheduled.
 - [ ] After the calendar page ships: remove Indify and revoke its access to the Hive Google account. Officers: move upcoming shows into "Hive Shows - Website Calendar".
 - [ ] Mailing list: native themed form → Google Form `formResponse`, entry IDs from `content/site.yaml` (drift check already runs), replacing the iframe.
-- [ ] Manually verify the "Add to Google Calendar" link while signed in to a Google account (can't be checked by CI).
 - [ ] **Expand the About page.** It's two paragraphs beside a large photo. Ideas: what long-form improv is, how the society works (NewBee → core teams, electives), how auditions work, a short history/lineage timeline (from teams data), FAQ, a video.
 - [ ] Hero sizing: cap the homepage hero at ~65vh (it currently dominates the fold).
 - [ ] Responsive images at export: AVIF/WebP variants, `srcset`/`sizes`, `loading="lazy"`. Sources are already within `image-limits`.
 - [ ] Nav/footer into a shared layout; members and teams as data with a responsive grid (see audit §5). Lands with Astro.
-- [ ] Accessibility fixes: `<main>` landmark, heading order, stable anchors (`lang` and labelled social links are done).
 
 ### Beeble
 - [ ] Confirm with managers: Beeble as SoT via structured data + monorepo (see decision above).
@@ -120,6 +118,8 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-24: Accessibility: `<main id="main">` landmark and a "Skip to content" link on every page, footer marked `role="contentinfo"`; one `<h1>` per page with no skipped heading levels (members/teams had 6 and 9 `<h1>`s; calendar, contact, mailing list had none); non-heading subtitles and class years are no longer headings; readable section anchors (`members.html#alumni`, `#executive-board`, `#active-members`, `teams.html#core-teams`, …) replace generated `article11-*` ids. Layout verified element-by-element identical at 1400 and 390 px.
+- 2026-09-24: "Add to Google Calendar" link verified manually (signed in).
 - 2026-09-24: Removed `vendor/smooth-scroll` (Mobirise's bundled wheel-scroll smoother: it replaced native mouse-wheel/keyboard scrolling with scripted animation, which fights OS scroll settings and reduced-motion preferences). Bootstrap's reboot already sets `scroll-behavior: smooth` for in-page links, respecting `prefers-reduced-motion`.
 - 2026-09-24: `public/assets/` reorganized: third-party libraries under `vendor/` (bootstrap, navbar-dropdown, smooth-scroll), site stylesheets under `css/` (`base.css` ← `theme/css/style.css`, `sections.css` ← `mobirise/css/mbr-additional.css`, `overrides.css` ← `site/overrides.css`). No Mobirise-named paths remain.
 - 2026-09-24: Removed unused Mobirise runtime: `mobirise2` icon font (no icons used), `theme/js/script.js` (none of its features' markup present; nav toggle and dropdown verified without it), leftover `data-slide-to` attributes. Socicon font (732 KB for 5 icons) replaced by inline SVGs of the same glyphs (`.social-icon` in `overrides.css`); icon positions verified unchanged within 1 px at desktop and phone widths. ~1 MB less per first page load.

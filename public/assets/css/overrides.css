@@ -8,14 +8,19 @@
  * - Interim: this file goes away when pages move to templates (see docs/PROJECT_LOG.md).
  */
 
-/* Short pages: keep the footer at the bottom of the viewport. The last content section grows
-   to fill the gap, so its own background shows instead of the bare page background. */
+/* Short pages: keep the footer at the bottom of the viewport. <main> takes the spare height and its
+   last section grows into it, so that section's background shows instead of the bare page background. */
 body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
-body > section:has(+ section.footer3) {
+body > main {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+main > section:last-child {
   flex-grow: 1;
 }
 
@@ -85,3 +90,9 @@ section.contacts03 .calendar-subscribe .btn {
    (24px) looked undersized next to the logo, and footer icons (32px) left the 72px bubbles mostly empty. */
 .iconfont-wrapper .social-icon > svg { width: 1.25em; height: 1.25em; }
 .soc-item .social-icon > svg { width: 1.3em; height: 1.3em; }
+
+/* Accessibility: member-card subtitles are <div>s (not headings), so restore the 1.2 line height the
+   generated .cid-* h6 rule gave them. The skip link (Bootstrap's visually-hidden-focusable) sits
+   above the page when focused instead of pushing the flex layout down. */
+.gallery3 .item-subtitle { line-height: 1.2; }
+.skip-link:focus { position: absolute; top: 0.5rem; left: 0.5rem; z-index: 1100; width: max-content; padding: 0.5rem 1rem; }
