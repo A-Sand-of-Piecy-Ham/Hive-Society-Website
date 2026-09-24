@@ -75,7 +75,6 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] After the calendar page ships: remove Indify and revoke its access to the Hive Google account. Officers: move upcoming shows into "Hive Shows - Website Calendar".
 - [ ] Mailing list: native themed form → Google Form `formResponse`, entry IDs from `content/site.yaml` (drift check already runs), replacing the iframe.
 - [ ] **Expand the About page.** It's two paragraphs beside a large photo. Ideas: what long-form improv is, how the society works (NewBee → core teams, electives), how auditions work, a short history/lineage timeline (from teams data), FAQ, a video.
-- [ ] Hero sizing: cap the homepage hero at ~65vh (it currently dominates the fold).
 - [ ] Responsive images at export: AVIF/WebP variants, `srcset`/`sizes`, `loading="lazy"`. Sources are already within `image-limits`.
 - [ ] Nav/footer into a shared layout; members and teams as data with a responsive grid (see audit §5). Lands with Astro.
 
@@ -118,6 +117,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-24: Homepage hero capped at 65vh with `object-fit: cover` (the top-of-photo crop was done 2026-09-23).
 - 2026-09-24: Accessibility: `<main id="main">` landmark and a "Skip to content" link on every page, footer marked `role="contentinfo"`; one `<h1>` per page with no skipped heading levels (members/teams had 6 and 9 `<h1>`s; calendar, contact, mailing list had none); non-heading subtitles and class years are no longer headings; readable section anchors (`members.html#alumni`, `#executive-board`, `#active-members`, `teams.html#core-teams`, …) replace generated `article11-*` ids. Layout verified element-by-element identical at 1400 and 390 px.
 - 2026-09-24: "Add to Google Calendar" link verified manually (signed in).
 - 2026-09-24: Removed `vendor/smooth-scroll` (Mobirise's bundled wheel-scroll smoother: it replaced native mouse-wheel/keyboard scrolling with scripted animation, which fights OS scroll settings and reduced-motion preferences). Bootstrap's reboot already sets `scroll-behavior: smooth` for in-page links, respecting `prefers-reduced-motion`.

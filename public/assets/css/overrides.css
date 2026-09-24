@@ -96,3 +96,8 @@ section.contacts03 .calendar-subscribe .btn {
    above the page when focused instead of pushing the flex layout down. */
 .gallery3 .item-subtitle { line-height: 1.2; }
 .skip-link:focus { position: absolute; top: 0.5rem; left: 0.5rem; z-index: 1100; width: max-content; padding: 0.5rem 1rem; }
+
+/* Homepage hero: on very wide screens the 8/12-column photo grows taller than the viewport. Cap it at
+   65vh and crop (centered) instead of letting the page open on nothing but photo. On 16:9 screens it
+   is already ~62vh, so the cap only engages on ultrawide or short windows. */
+section.header1 .image-wrapper img { max-height: 65vh; object-fit: cover; }
