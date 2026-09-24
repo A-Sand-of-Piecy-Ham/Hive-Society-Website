@@ -6,6 +6,7 @@ Guidance for AI coding agents working in this repo. Humans: see [README.md](READ
 > **Keep this file current.** If your change makes anything here wrong or incomplete (commands, layout, conventions, decisions), update this file in the same change. A stale AGENTS.md misleads every later agent.
 > Also keep in sync, in the same change:
 > - [docs/PROJECT_LOG.md](docs/PROJECT_LOG.md): tick TODOs you finish (move them to **Done** with the date), add TODOs you defer, record decisions.
+> - [docs/RUNBOOK.md](docs/RUNBOOK.md), the maintainer runbook: new or changed npm scripts, commands, deploy steps, setup, CI checks. A test fails if an npm script isn't in its scripts table.
 > - [EDITING.md](EDITING.md), the non-coder guide: whenever what's editable, or how, changes. It's the only doc editors read.
 >   **Readers of EDITING.md do not like reading; content must be brief and avoid technical jargon. Assume website editors are lazy.**
 >   Short bullets, plain words, no "CMS", "repo", "PR", "cache", file paths, or explanations of how things work. Only what to do, what not to do, and who to ask. If a line doesn't change what an editor does, cut it.
@@ -26,6 +27,9 @@ Website for Hive Society Improv (UIUC), https://hivesocietyimprov.com. Today it'
 | Lint | `npm run lint` |
 | Type check | `npm run typecheck` |
 | Render k8s manifests | `kubectl kustomize kube/overlays/local` (or `prod`) |
+| Live Google Form check | `npm run check:form` (network) |
+
+Full reference with options, deploys, and setup: [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 Node 24+ runs `.mts` directly via type stripping; there's no build step. `tsconfig.json` sets `erasableSyntaxOnly`, so **don't use `enum`, `namespace`, or constructor parameter properties**.
 
@@ -48,7 +52,7 @@ scripts/validate-theme.mts   CLI used by CI
 test/*.test.mts        node:test suites (server, theme, local link/asset check)
 .github/               ci.yml (required checks), pr-title.yml, dependabot.yml
 kube/base, kube/overlays/{local,prod}   Kustomize; prod = k3s + Cloudflare Tunnel
-docs/                  PROJECT_LOG.md (decisions + TODOs), site-audit.md
+docs/                  RUNBOOK.md (commands/procedures), PROJECT_LOG.md (decisions + TODOs), site-audit.md
 ```
 
 ## Conventions

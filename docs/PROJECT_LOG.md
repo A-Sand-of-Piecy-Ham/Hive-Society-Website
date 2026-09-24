@@ -104,6 +104,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-23: `docs/RUNBOOK.md`: setup, all npm scripts with options, change workflow, deploys (Pages, container, k3d, prod k3s), one-time GitHub/Cloudflare/Google setup, CI-failure guide, maintenance calendar, troubleshooting. `test/docs.test.mts` fails if an npm script is undocumented. README/AGENTS point to it.
 - 2026-09-23: Mailing-list config in `content/site.yaml`; `src/forms.mts` (Google Form structure parser + drift comparison) with tests; `npm run check:form`; `form-drift.yml` workflow. Live form verified: 3 questions, IDs match.
 - 2026-09-23: Calendar audit: public calendars, Indify config exposure, Indify blank due to private primary calendar + free-tier 1-month-back/3-month-ahead window. Unlisting steps given to officers (secret iCal link or Google Group).
 - 2026-09-23: Asset fingerprinting in export + immutable caching; server cache policy (`?v=` immutable, else revalidate with Last-Modified/304); Docker image now serves the exported `dist/` (multi-stage).

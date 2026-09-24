@@ -29,22 +29,14 @@ The site is mostly content: shows, members, teams, and the society's history. It
 
 ## Quick start
 
-Requires Node 24+. Node runs the `.mts` TypeScript files directly, so there is no build step.
+Requires Node 24+.
 
 ```bash
-npm install
+npm ci
 npm start            # http://localhost:8080
 ```
 
-| Command | What it does |
-|---|---|
-| `npm start` | Serve `public/` locally |
-| `npm run export` | Build a static copy of the site into `dist/` (for Cloudflare Pages or any static host) |
-| `npm run start:dist` | Preview the exported `dist/` |
-| `npm test` | Unit tests: server routing, theme rules, and a check that every link/image in the pages exists |
-| `npm run validate:theme` | Check `content/theme.yaml` against the theme rules |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript type check |
+**Every command, deployment, and setup step is in [docs/RUNBOOK.md](docs/RUNBOOK.md)**: npm scripts, making a change, Cloudflare Pages / container / Kubernetes deploys, one-time GitHub and Cloudflare setup, what to do when CI fails, and routine maintenance.
 
 ## Layout
 
@@ -58,7 +50,7 @@ scripts/             static export → dist/, theme validator CLI
 test/                node:test suites
 .github/             CI workflows, PR-title check, Dependabot
 kube/                Kubernetes manifests: base/ plus overlays/local (k3d) and overlays/prod (k3s + Cloudflare Tunnel)
-docs/                site audit, project log
+docs/                RUNBOOK.md (all commands and procedures), PROJECT_LOG.md, site audit
 EDITING.md           guide for non-coders (keep it accurate when what's editable changes)
 AGENTS.md            instructions for AI coding agents (keep it updated when conventions change)
 ```
