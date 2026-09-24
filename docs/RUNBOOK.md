@@ -49,7 +49,7 @@ public/ (pages) ─┼─► npm start           → local preview, http://local
                  └─► npm run export → dist/ → Cloudflare Pages → hivesocietyimprov.com
 ```
 
-- **`public/`**: the site's pages, images, and styles. (Being replaced by the Astro version; see the README.)
+- **`public/`**: the site's pages (`*.html`) and `assets/`: `images/`, `css/` (the site's styles; layout fixes go in `css/overrides.css`), and `vendor/` (third-party libraries such as Bootstrap, kept unmodified). (Being replaced by the Astro version; see the README.)
 - **`content/theme.yaml`**: every color on the site. **`content/site.yaml`**: settings that pages read (calendar, mailing-list form) and image limits.
 - **`public/assets/images/members/`**: one portrait per member, `firstname-lastname.jpg` ([§6](#member-portraits)).
 - **`src/`**: the small Node server behind `npm start`, and the code that reads the YAML files.

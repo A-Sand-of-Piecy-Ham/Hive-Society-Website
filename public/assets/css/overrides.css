@@ -3,7 +3,7 @@
  *
  * - Selectors target Mobirise block-type classes (footer3, contacts01, contacts03), not the
  *   generated `cid-*` hashes, so one rule covers every page using that block.
- *   `section.` prefixes raise specificity above the `.cid-*` rules in mbr-additional.css.
+ *   `section.` prefixes raise specificity above the `.cid-*` rules in sections.css.
  * - Spacing and sizing only. Colors belong in content/theme.yaml, never here.
  * - Interim: this file goes away when pages move to templates (see docs/PROJECT_LOG.md).
  */
