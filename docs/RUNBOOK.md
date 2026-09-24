@@ -4,7 +4,7 @@ Every command and procedure needed to develop, check, deploy, and maintain the s
 
 Not a developer? You want [EDITING.md](../EDITING.md) instead.
 
-**Contents:** [Setup](#1-setup) · [npm scripts](#2-npm-scripts) · [Making a change](#3-making-a-change) · [Deploying](#4-deploying) · [One-time project setup](#5-one-time-project-setup) · [When CI fails](#6-when-ci-fails) · [Routine maintenance](#7-routine-maintenance) · [Troubleshooting](#8-troubleshooting)
+**Contents:** [Setup](#1-setup) · [npm scripts](#2-npm-scripts) · [Making a change](#3-making-a-change) · [Deploying](#4-deploying) · [One-time project setup](#5-one-time-project-setup) · [Tests and checks](#6-tests-and-checks) · [When CI fails](#7-when-ci-fails) · [Routine maintenance](#8-routine-maintenance) · [Troubleshooting](#9-troubleshooting)
 
 ---
 
@@ -193,7 +193,42 @@ Do these once, when setting the project up or moving it to a new owner. Tick the
 - The shows calendar ("Hive Shows - Website Calendar") must be **public**; its ID goes in `content/site.yaml`.
 - The mailing-list Google Form's question IDs go in `content/site.yaml`; verify with `npm run check:form`.
 
-## 6. When CI fails
+## 6. Tests and checks
+
+### Test suites (`npm test`)
+
+All tests use Node's built-in runner (`node:test`). They're offline and take under a second. The table must list every file in `test/`; a test enforces it.
+
+| File | Suites | What it guarantees | Cases |
+|---|---|---|---|
+| `test/app.test.mts` | site server | Pages served at `/` and without `.html`; un-fingerprinted assets revalidate (`304` when unchanged); `?v=` assets cached for a year; named links rendered from `site.yaml`; `/healthz`; `404` for missing files, path traversal (incl. encoded), and malformed URLs; `405` for non-GET/HEAD; `HEAD` has no body | 11 |
+| `test/render.test.mts` | renderPage: named links / asset fingerprints | Link targets filled and escaped, idempotent; unknown names (incl. `constructor`) fail the render; `?v=` added or replaced, `#fragments` kept; external URLs and pages untouched; no fingerprints on the live server | 6 |
+| `test/site.test.mts` | site settings / calendar links | The committed `content/site.yaml` loads; bad calendar or form-question IDs are rejected with the key named; "Add to Google Calendar" link decodes to the calendar ID; iCal and webcal links point at the same public feed | 5 |
+| `test/forms.test.mts` | parseGoogleForm / formDrift | Google Form structure parsed (IDs, titles, types, required, options), non-questions skipped, layout changes throw; drift detected for deleted/re-created questions and new *required* ones, not for new optional ones. Uses a built-in sample, not the live form | 5 |
+| `test/theme.test.mts` | theme validation | The committed `content/theme.yaml` passes; 6/8-digit hex accepted; color names, short hex, references, nesting, and non-kebab keys rejected; team list rules (unique ids, both colors, no extra keys); flattening to CSS variables | 7 |
+| `test/site-links.test.mts` | local links and assets resolve | Every `href`/`src` in every page of `public/` points to a file that exists (one case per page) | 8 |
+| `test/docs.test.mts` | docs/RUNBOOK.md | Every npm script is in [§2](#2-npm-scripts) and every test file is in this table | 2 |
+
+### What CI runs
+
+| Workflow → job | Runs | When | Blocks merging? |
+|---|---|---|---|
+| CI → **Lint, typecheck, test** | `npm ci`, lint, typecheck, `validate:theme`, `npm test`, `npm run export` (uploads `dist/` as an artifact) | Every PR, push to `main`, merge queue | Yes |
+| CI → **Kubernetes manifests** | Renders every overlay with `kubectl kustomize`, validates with `kubeconform -strict` | Same | Yes |
+| CI → **Container image** | Builds the image, runs it read-only as UID 1000, requests `/healthz`, `/`, `/members`, and an image | Same | Yes |
+| PR title → **Conventional PR title** | Title starts with an allowed type ([README → Versioning](../README.md#versioning)) | PR opened, edited, or updated | Yes |
+| Mailing-list form drift → **Live form matches site settings** | `npm run check:form` against the live Google Form | Daily, on demand, and on PRs touching form settings | No (depends on Google being up) |
+| Dependabot | Opens dependency-update PRs, which then go through the checks above | Weekly | n/a |
+
+Run a single CI job's equivalent locally: the commands in [§2](#2-npm-scripts) (pre-commit check), [§4 Container image](#container-image), and `kubectl kustomize kube/overlays/<name>`.
+
+### Not covered yet
+
+Planned (see [PROJECT_LOG.md](PROJECT_LOG.md)): browser tests across phone/desktop sizes (Playwright), accessibility checks (axe), screenshot comparison, performance budgets (Lighthouse), a color-contrast check for `theme.yaml`, and the roster/alumni check. Nothing yet asserts the contents of the exported `dist/` directly; fingerprinting is covered by the unit tests and the container smoke test.
+
+Checked by hand, not automatically: the "Add to Google Calendar" button (needs a signed-in Google account).
+
+## 7. When CI fails
 
 | Failing check | What it means | Fix |
 |---|---|---|
@@ -201,22 +236,22 @@ Do these once, when setting the project up or moving it to a new owner. Tick the
 | **Lint, typecheck, test** → lint / typecheck | Code style or type error | Run the same command locally; `npm run lint -- --fix` handles most lint issues |
 | … → Validate theme.yaml | A color isn't `#rrggbb`, a key isn't kebab-case, or a team entry is malformed | The error names the exact key; fix it in `content/theme.yaml` |
 | … → test: *local links and assets resolve* | A page references a file that doesn't exist (renamed/deleted image) | The failure lists the missing paths; fix the reference or restore the file |
-| … → test: *every npm script is documented* | A script was added to `package.json` without a row in [§2](#2-npm-scripts) | Add the row |
+| … → test: *every npm script / test file is documented* | A script was added to `package.json` without a row in [§2](#2-npm-scripts), or a test file without a row in [§6](#6-tests-and-checks) | Add the row |
 | **Kubernetes manifests** | A Kustomize overlay doesn't render, or a resource fails schema validation | `kubectl kustomize kube/overlays/<name>` locally; kubeconform's message names the field |
 | **Container image** | Build failed, or the container didn't serve pages under pod constraints | `docker build` and `docker run` locally ([§4](#container-image)); check `docker logs` |
 | **Mailing-list form drift** (daily, not required) | A Google Form question was deleted or re-created, or a new required question was added | `npm run check:form` shows which; update the ID in `content/site.yaml` (open the form → ⋮ → *Get pre-filled link*: field names show as `entry.<id>`) |
 
-## 7. Routine maintenance
+## 8. Routine maintenance
 
 | When | Task |
 |---|---|
 | Weekly (Dependabot PRs) | Review and merge dependency PRs (`deps:` = patch release, `ci:` = no release) once checks pass |
-| When the form drift check emails | [§6](#6-when-ci-fails), last row |
+| When the form drift check emails | [§7](#7-when-ci-fails), last row |
 | Start of each semester | Confirm upcoming shows are in the shows calendar; roster updated (leavers → Alumni); officer list in `ROSTER_OFFICERS` current |
 | When officers change | Update GitHub access, `ROSTER_OFFICERS`, and access to the Hive Google account / Cloudflare |
 | Before making the repo public | Review git history for anything that shouldn't be public |
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 - **Browser shows an old version:** hard-reload (Ctrl/Cmd + Shift + R). On the deployed site this should never be needed, because assets are fingerprinted; if it is, check that the deploy ran `npm run export`.
 - **`npm start` fails with a site.yaml error:** the message names the bad key in `content/site.yaml`.
