@@ -98,6 +98,20 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Port pages; retire `public/` Mobirise pages, `src/render.mts` fingerprinting, and `overrides.css`.
 - [ ] Keep the Node server path via `@astrojs/node` only if a dynamic feature needs it.
 
+### Existing libraries for things we built (noted 2026-09-24; nothing replaced yet)
+Prefer an existing, maintained package over our own code where it fits. Versions checked on npm 2026-09-24. Many of these come free with Astro, so most swaps should happen *as part of* the migration rather than before it.
+- [ ] `src/theme.mts` (YAML tokens → CSS variables): **Style Dictionary** (`style-dictionary` 5.x, the standard design-token build tool; outputs CSS custom properties) or **Terrazzo** (`@terrazzo/cli`, W3C Design Tokens format). Our semantic-key rules (no palette names, literal hex only) would become a custom validator/format on top; the flattening and CSS output go away.
+- [ ] Settings/theme validation (`parseSite`, `parseImagePolicy`, `validateTheme` shape checks): a schema library, **Zod** (4.x; what Astro content collections use natively) or **Valibot**/**Ajv** (JSON Schema, which also gives editors YAML autocomplete via the YAML language server). Error messages naming the bad key come built in.
+- [ ] `src/images.mts` dimension parsing: **image-size** (reads PNG/JPEG/GIF/WebP/AVIF headers). Resizing/format conversion (planned AVIF/WebP): **sharp**, or Astro's `astro:assets`, which uses it. Folder naming rules: **ls-lint** (`@ls-lint/ls-lint`, a file-name linter configured in `.ls-lint.yml`). Size limits and duplicate detection have no standard tool; keep ours.
+- [ ] `src/app.mts` static server (Pages-style URLs, cache headers, 304s): **wrangler** `pages dev` emulates Cloudflare Pages exactly (including `_headers`); for the container, **sirv** or **serve-static** handle ETag/Last-Modified and clean URLs. Astro's dev server replaces the dev path entirely.
+- [ ] `src/render.mts` asset fingerprinting + `data-site-link` filling: built into Astro/Vite (hashed asset names; settings read in templates). Nothing to adopt before then.
+- [ ] `scripts/export.mts` sitemap: **@astrojs/sitemap** (or `sitemap` without Astro).
+- [ ] `tests/site-links.test.mts` (every link/image exists): **linkinator** (also checks external links) and **html-validate** (HTML correctness, a11y basics). Could complement rather than replace the offline check.
+- [ ] `src/forms.mts` (scraping the Google Form's `FB_PUBLIC_LOAD_DATA_`): the official **Google Forms API** (`googleapis`, `forms.get`) returns question IDs reliably, but needs a service account with access to the form. Scraping needs no credentials; revisit if Google changes the page format.
+- [ ] Calendar links: **calendar-link** generates per-event add-to-calendar links (Google/Outlook/ICS) for the planned calendar page. Subscription links (`calendarLinks`) are simple enough to keep.
+- [ ] Planned work, use a library from the start: ICS parsing → **node-ical**; contrast check → **colorjs.io** (`contrastWCAG21`; `wcag-contrast` is unmaintained since 2022).
+- [ ] Vendored front-end: Bootstrap is **5.0.1** (2021); update or drop with Astro. `vendor/smooth-scroll` hijacks mouse-wheel scrolling (an accessibility/UX anti-pattern); replace with CSS `scroll-behavior: smooth` for in-page links, or remove.
+
 ### Housekeeping
 - [ ] **On hold:** create the GitHub remote; enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push). A private repo on GitHub Free can't enforce it: get GitHub Pro (Student Developer Pack) or host under an org on Team.
 - [ ] Set the real GHCR owner in `kube/overlays/prod/kustomization.yaml`.
