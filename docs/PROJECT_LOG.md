@@ -8,6 +8,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 | Date | Decision | Why |
 |---|---|---|
 | 2026-09-23 | Calendar: source is the revived shows-only **"Hive Shows - Website Calendar"**; page shows a **month grid with an upcoming-shows list under it**; each show shows its Google Calendar **description** and its own **add-to-calendar** link; homepage features the **next show** (falls back to "Come See Us!"). Freshness: up to a week is acceptable, so a **daily scheduled rebuild** is plenty (no visitor-side JavaScript needed). **Build deferred** | User answers to calendar questions; a live API would be overkill for the required freshness |
+| 2026-09-23 | Images are limited per class by folder (`portraits` = `members/` 1080 px / 225 KB, sized for the large card so anyone can be promoted; `team-photos` = `teams/`; `other`), all classes required; portraits and team photos have naming rules. Team names are format-checked only | Every image has a limit; teams rename about yearly, so name ↔ data checks wait for a rename procedure |
 | 2026-09-23 | **Framework: Astro** (approved). Rationale recorded in README → Architecture | Content-heavy site maintained by non-coders: typed content collections, zero-JS default, static-first with optional Node adapter |
 | 2026-09-23 | Roster-removal override = officer-run `workflow_dispatch` ("Approve roster removal") that sets a status on the PR head SHA; officer allowlist in repo variable `ROSTER_OFFICERS`. No labels, tokens, or files | No lasting record of removals beyond git history; approval can't be self-granted by typing text; invalidated by new commits |
 | 2026-09-23 | Mailing-list form drift check: daily scheduled + on PRs touching form settings; not a required check | Catches deleted/re-created Google Form questions without letting a Google outage block merges |
@@ -32,15 +33,14 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 ## TODO
 
 ### Decisions needed
-- [ ] **Which Google Calendar is the source?** Site uses "Hive Shows - Website Calendar" (last event 2024-12-07). "Hive Society 2025 Official Calendar!" (public, events to 2026-05) mixes shows with internal meetings. Recommendation: a shows-only public calendar; change `content/site.yaml`.
 - [ ] Members data location: `content/members/` now, or wait for the Beeble/`handbook/` decision.
-- [ ] GitHub home for this repo (Hive org?). CI, CMS, and GHCR all depend on it.
-- [ ] Rendering engine for templated pages (Astro recommended; see `docs/site-audit.md` §4).
+- [ ] GitHub home for this repo (personal or Hive org). CI, Pages, CMS, and GHCR all depend on it.
 - [ ] Content PR policy: auto-merge on green checks vs require one approval.
+- [ ] **Officers:** should "Hive Society 2025 Official Calendar!" stay public? Audited 2026-09-23: it mixes shows with internal events (meetings, socials at "Hive House", "Survivor Night", a constitution meeting, trips, tentative dates); titles/dates only, no descriptions, attendees, or residential addresses. It's discoverable because Indify's public widget config exposes all three connected calendar IDs plus the account address. Unlisting steps: secret iCal link or Google Group.
 
 ### Theme
-- [ ] Theme build step: `content/theme.yaml` → generated `:root { --group-key: … }` CSS, consumed by templates.
-- [ ] Theme validator: also check team `id`s exist in the team data (once members/teams data exists). *(Format, kebab-case, list shape, and unique ids are done.)*
+- [ ] Theme build step: `content/theme.yaml` → generated `:root { --group-key: … }` CSS (`themeToCssVariables` exists; nothing consumes it yet). Lands with Astro.
+- [ ] Theme validator: also check team `id`s exist in team data. **Blocked** on a team-rename procedure (teams rename about every year or semester). *(Format, kebab-case, list shape, and unique ids are done.)*
 - [ ] Contract-break check (CI): fail if a theme key or content field is removed/renamed without a `!` / `BREAKING CHANGE` PR title.
 - [ ] Contrast check (CI): WCAG AA for each text/background pair (e.g. `buttons.text` on `buttons.background`, each `teams.*`).
 - [ ] Fix `links.text` (`#ffa600` on `#ffeb69` fails contrast).
@@ -51,34 +51,34 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Deploy the OAuth client (Sveltia CMS Authenticator on Cloudflare Workers) and register a GitHub OAuth app.
 - [ ] Enable `publish_mode: editorial_workflow` so edits become PRs that run CI.
 - [ ] Collections: theme, site settings (nav/footer/socials/contact), members, teams, events.
+- [ ] Media folders: member photo uploads go to `public/assets/images/members/` named from the member's name, team photos to `teams/` (so editors can't upload `IMG_1234.jpg`).
+- [ ] Mirror validator rules as field `pattern`s (hex colors, kebab ids, image names) so editors see errors before saving; CI still enforces.
 - [ ] Commit message templates that satisfy the PR-title / Conventional Commits check.
 
 ### CI / testing
 - [ ] Roster check: a member removed from the active roster must appear in alumni (graduated *or* left); override via the officer-run "Approve roster removal" workflow (see decision). Needs members as data first. Set `ROSTER_OFFICERS` repo variable; consider short Actions log retention.
+- [ ] Member ↔ portrait check: every member entry has a portrait (or an explicit "no photo") and every portrait belongs to a member; member ID = portrait base name. Not for teams until there's a rename procedure (rename photo, theme id, and data together; decide what happens to old names/alumni pages).
 - [ ] Playwright: functional tests across viewports (phone + desktop).
 - [ ] Playwright + axe: accessibility checks per page.
 - [ ] Playwright visual regression with screenshot diffs posted to the PR.
 - [ ] Lighthouse CI budgets (performance, a11y, page weight).
 - [ ] Per-PR preview deploys (Cloudflare Pages branches) linked from the PR.
 - [ ] Plain-language PR summary bot for non-coders.
-- [ ] release-please config: `changelog-sections` making `content`, `theme`, `refactor`, `build`, and `deps` visible (so they cut patch releases); Renovate/Dependabot configured to title PRs `deps:`, PR-title lint restricted to the README type list, release → GHCR tag → prod overlay.
+- [ ] release-please config: `changelog-sections` making `content`, `theme`, `refactor`, `build`, and `deps` visible (so they cut patch releases); release → GHCR tag → prod overlay. *(Dependabot `deps`/`ci` prefixes and PR-title lint are done.)*
 - [ ] CODEOWNERS: `content/**` editors vs `src/**`, `kube/**`, `.github/**` developers.
 
 ### Site
-- [ ] **Calendar page (on hold, decided 2026-09-23):** build-time from the shows calendar's ICS (parser must handle recurrence + timezones, e.g. `node-ical`). Month grid + upcoming-shows list under it; per show: title, date/time, venue, **description** (from the Google Calendar event), **add-to-calendar** link. Daily scheduled rebuild (redeploy only if the feed changed).
+- [ ] **Calendar page (on hold, decided 2026-09-23):** replaces Indify, which is blank today (its `checkedCalendars` is the account's private primary calendar; no events in any month, Sep 2023 → Sep 2026). Build-time from the shows calendar's ICS (parser must handle recurrence + timezones, e.g. `node-ical`). Month grid + upcoming-shows list under it; per show: title, date/time, venue, **description**, **add-to-calendar** link.
+- [ ] **Scheduled rebuilds** (with the calendar page): Pages deploy hook stored as `PAGES_DEPLOY_HOOK` secret; daily GitHub Actions cron POSTs to it (redeploy only if the feed changed).
 - [ ] **Homepage "Next show" (on hold):** next upcoming show from the same data replaces "Come See Us!"; falls back to it when nothing is scheduled.
-- [ ] After the calendar page ships: remove Indify and revoke its access to the Hive Google account. Officers: move upcoming shows into "Hive Shows - Website Calendar"; unlist "Hive Society 2025 Official Calendar!" (secret link or Google Group).
-- [ ] Mailing list: native form → Google Form `formResponse` (entry IDs in `content/site.yaml`, not markup) + CI drift check against the live form.
+- [ ] After the calendar page ships: remove Indify and revoke its access to the Hive Google account. Officers: move upcoming shows into "Hive Shows - Website Calendar".
+- [ ] Mailing list: native themed form → Google Form `formResponse`, entry IDs from `content/site.yaml` (drift check already runs), replacing the iframe.
 - [ ] Manually verify the "Add to Google Calendar" link while signed in to a Google account (can't be checked by CI).
-- [ ] Privacy (audited 2026-09-23): "Hive Society 2025 Official Calendar!" is public and mixes shows with internal events (meetings, socials at "Hive House", "Survivor Night", a constitution meeting, trips, tentative dates). Titles/dates only: no descriptions, attendees, or residential addresses. The Indify widget's public page config exposes the IDs of all three connected calendars plus the account address, which is how the calendar is discoverable. Officers decide whether it should stay public.
-- [ ] The live Calendar page is **empty**: the Indify widget shows no events in any month (checked Sep 2023 → Sep 2026) and never requests event data. Its `checkedCalendars` is the account's private primary calendar, not the public shows calendar. Replacing Indify fixes this.
 - [ ] **Expand the About page.** It's two paragraphs beside a large photo. Ideas: what long-form improv is, how the society works (NewBee → core teams, electives), how auditions work, a short history/lineage timeline (from teams data), FAQ, a video.
-- [ ] Image sizing by role (see decision needed below): hero ≤ ~65vh, member cards ~280 px, exec cards ~360 px; source files at 2× display size.
-- [ ] Responsive images at export: AVIF/WebP variants, `srcset`/`sizes`, `loading="lazy"`. Source images are already normalized (~7 MB total).
-- [ ] Extract site settings (`site.yaml`) and move nav/footer into a shared layout.
-- [ ] Members and teams as data; responsive grid layout (see audit §5).
+- [ ] Hero sizing: cap the homepage hero at ~65vh (it currently dominates the fold).
+- [ ] Responsive images at export: AVIF/WebP variants, `srcset`/`sizes`, `loading="lazy"`. Sources are already within `image-limits`.
+- [ ] Nav/footer into a shared layout; members and teams as data with a responsive grid (see audit §5). Lands with Astro.
 - [ ] Accessibility fixes: `<main>` landmark, heading order, stable anchors (`lang` and labelled social links are done).
-- [ ] Replace the Indify calendar and Google Form iframes with native components.
 
 ### Beeble
 - [ ] Confirm with managers: Beeble as SoT via structured data + monorepo (see decision above).
@@ -91,24 +91,20 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] *If the monorepo is rejected:* transfer `lumirth/beeble` to the Hive org instead (keeps history and redirects), give it its own CMS instance, and have this site fetch its data at build time.
 - [ ] Fix its deploy workflow: installs mdBook via rustup on cache miss; `actions/cache@v3` is deprecated.
 
-### Astro migration
-- [ ] Member data ID = portrait base name (`members/<id>.jpg`); add a test that every member entry has a portrait (or an explicit "no photo") and every portrait belongs to a member. Not for teams yet: teams rename about every year or semester, so a team-photo ↔ team-data check needs a rename procedure first (rename photo, theme id, and data together; decide what happens to old names/alumni pages).
-- [ ] CMS: member photo uploads go to `public/assets/images/members/` and are named from the member's name (so editors can't upload `IMG_1234.jpg`).
+### Astro migration (on hold)
 - [ ] Scaffold Astro (TypeScript strict) alongside the current site; port layout (nav/footer) and one page first to validate the approach.
 - [ ] Content collections + schemas: members, teams, events; theme.yaml → CSS custom properties; site.yaml → settings.
 - [ ] Port pages; retire `public/` Mobirise pages, `src/render.mts` fingerprinting, and `overrides.css`.
 - [ ] Keep the Node server path via `@astrojs/node` only if a dynamic feature needs it.
 
 ### Housekeeping
-- [ ] Private repo on GitHub Free can't enforce branch protection: get GitHub Pro (Student Developer Pack) or host under an org on Team.
-- [ ] On creating the GitHub remote: enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push).
+- [ ] **On hold:** create the GitHub remote; enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push). A private repo on GitHub Free can't enforce it: get GitHub Pro (Student Developer Pack) or host under an org on Team.
 - [ ] Set the real GHCR owner in `kube/overlays/prod/kustomization.yaml`.
 - [ ] Private repo ⇒ private GHCR images: add `imagePullSecrets: [{name: ghcr-pull}]` to the prod overlay (patch) and create the secret (see docs/CONTAINERIZATION.md).
-- [ ] CMS config: mirror validator rules as field `pattern`s (hex colors, kebab ids) so editors see errors before saving; CI still enforces.
-- [ ] Scheduled rebuilds: create a Pages deploy hook, store as `PAGES_DEPLOY_HOOK` secret, add a daily GitHub Actions cron that POSTs to it (needed once the calendar is built from the ICS).
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-23: Project log cleanup. Resolved: calendar source (shows-only "Hive Shows - Website Calendar", see Decisions) and rendering engine (Astro). Merged duplicate Indify/iframe, image-sizing, and theme-CSS items; mailing-list drift check marked done within its item.
 - 2026-09-23: Member portraits resized to 1080 px (5.4 MB → 4.8 MB, max 199 KB); `image-limits.portraits` tightened to 1080 px / 225 KB. Sized for the large half-width card (~540 CSS px at 2×) so any member can be promoted into one. Homepage hero → `homepage-group-photo.jpg`, About photo → `about-group-spiral-photo.jpg`. Decided: no team-name ↔ team-data check until there's a rename procedure (teams rename ~yearly).
 - 2026-09-23: Team photos/logos moved to `public/assets/images/teams/<team-id>.jpg|png` (9 files, ids match `theme.yaml` teams where present), naming enforced by `check:images`; fixed `alt` text (7 of 9 said "DeMarcus Blackington", one named the wrong team). `image-limits` split into per-class sections (`portraits`, `team-photos`, `other`), all required, unknown sections rejected.
 - 2026-09-23: Member portraits moved to `public/assets/images/members/firstname-lastname.jpg` (41 files), naming enforced by `check:images`. Fixed wrong `alt` text on 38 of 41 portraits (Mobirise copy-paste named the wrong person). `site.yaml` key `images` → `image-limits`.
