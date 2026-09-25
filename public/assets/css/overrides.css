@@ -178,3 +178,16 @@ section.hero .image-wrapper img { max-height: 65vh; object-fit: cover; }
 @media (prefers-reduced-motion: reduce) {
   .rainbow-text, .spin-on-click.spinning { animation: none; }
 }
+
+/* Small inline pictures inside member quips, squared to the text height. `.member-grid img` (sections.css)
+   stretches every card image to full width for portraits, so this needs the extra specificity to undo it.
+   The site-wide 2rem image rounding (sections.css) would make pictures this small into circles, so corners stay square. */
+.member-grid img.little-picture {
+  display: inline-block;
+  width: auto;
+  height: 1.5em;
+  /* aspect-ratio: 1; */
+  object-fit: cover;
+  vertical-align: middle;
+  border-radius: 0 !important; /* the site-wide image rounding is !important */
+}
