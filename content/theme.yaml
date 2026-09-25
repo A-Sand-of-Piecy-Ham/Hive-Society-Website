@@ -50,7 +50,7 @@ footer:
   heading: "#ffffff"
   text: "#ffeb69"
   copyright: "#ffeb69"
-  social-icon: "#593269"
+  social-icon: "#000000"
   social-icon-background: "#ffeb69"
   social-icon-hover-background: "#ffffff"
 
