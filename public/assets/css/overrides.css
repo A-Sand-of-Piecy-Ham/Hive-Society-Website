@@ -118,3 +118,24 @@ section.hero .image-wrapper img { max-height: 65vh; object-fit: cover; }
 .google-map iframe { border: 0; }
 /* The hamburger is a <span> now (a <div> isn't allowed inside <button>); keep it a block box. */
 .navbar-toggler .hamburger { display: block; }
+
+/* Alumni: each name card filled a quarter-width column with its text left-aligned, so the names
+   hugged the left of each column and the grid looked slanted. A grid whose columns are only as
+   wide as their widest name (max-content), spread evenly, keeps each column's names on a shared
+   left edge while the column itself sits centered in its share of the row. Row-by-row reading
+   order and the one-column phone layout are unchanged. */
+.alumni-list .row:has(> .item) {
+  display: grid;
+  grid-template-columns: max-content;
+  justify-content: center;
+}
+@media (min-width: 992px) {
+  .alumni-list .row:has(> .item) { grid-template-columns: repeat(4, max-content); justify-content: space-evenly; }
+}
+.alumni-list .row > .item { width: auto; max-width: none; }
+
+/* Member cards: portraits are square, the "photo coming soon" placeholder is 4:3. Rows mixing the
+   two had uneven card heights, so every card image renders square; the placeholder keeps its right
+   side, where the "?" is. */
+.member-grid .item-img img { aspect-ratio: 1; object-fit: cover; }
+.member-grid .item-img img[src$="portrait-placeholder.jpg"] { object-position: right center; }
