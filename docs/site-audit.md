@@ -40,7 +40,7 @@ Theme palette (from `mbr-additional.css`): purple `#593269` (text/brand), yellow
 - Collapsed the `?v=`/`?f2bix4` query-string filenames into single files.
 - Decoded Cloudflare's email obfuscation back to a plain `mailto:` and removed the `/cdn-cgi/` script, since that only works when proxied through Cloudflare.
 - Removed the Mobirise badge section (spacer GIF + inline styles), builder meta tags and editor-only attributes, and the unused YouTube-background script (2026-09-23).
-- Left as-is on purpose: the Bootstrap markup and `cid-*` section classes that `mbr-additional.css` targets. They go away when the pages become templates (§5).
+- ~~Left as-is on purpose: the `cid-*` section classes that `mbr-additional.css` targets~~ (done 2026-09-24: renamed to readable section classes, `mbr-additional.css` → `sections.css` at 39 KB). The Bootstrap markup stays until the pages become templates (§5).
 
 ## 3. Where dynamic content, a database, or integrations fit
 

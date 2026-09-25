@@ -1,3 +1,8 @@
+/*
+ * Base styles from the original (Mobirise) site, renamed to readable classes: typography reset,
+ * type scale weights, buttons, and shared section layout. Section-specific rules live in
+ * sections.css; interim fixes in overrides.css. Being replaced by Astro components.
+ */
 @charset "UTF-8";
 section {
   background-color: #ffffff;
@@ -64,7 +69,7 @@ section,
   word-wrap: break-word;
 }
 
-a.mbr-iconfont:hover {
+a.icon:hover {
   text-decoration: none;
 }
 
@@ -85,16 +90,16 @@ a, a:hover {
   text-decoration: none;
 }
 
-.mbr-section-title {
+.section-title {
   font-style: normal;
   line-height: 1.3;
 }
 
-.mbr-section-subtitle {
+.section-subtitle {
   line-height: 1.3;
 }
 
-.mbr-text {
+.body-text {
   font-style: normal;
   line-height: 1.7;
 }
@@ -105,11 +110,11 @@ h3,
 h4,
 h5,
 h6,
-.display-1,
-.display-2,
-.display-4,
-.display-5,
-.display-7,
+.type-hero,
+.type-title,
+.type-nav,
+.type-heading,
+.type-body,
 span,
 p,
 a {
@@ -139,38 +144,9 @@ section {
   background-repeat: no-repeat;
   background-size: cover;
 }
-section .mbr-background-video,
-section .mbr-background-video-preview {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  top: 0;
-}
 
 .hidden {
   visibility: hidden;
-}
-
-.mbr-z-index20 {
-  z-index: 20;
-}
-
-/*! Base colors */
-.mbr-white {
-  color: #ffffff;
-}
-
-.mbr-black {
-  color: #111111;
-}
-
-.mbr-bg-white {
-  background-color: #ffffff;
-}
-
-.mbr-bg-black {
-  background-color: #000000;
 }
 
 /*! Text-aligns */
@@ -184,23 +160,6 @@ section .mbr-background-video-preview {
 
 .align-right {
   text-align: right;
-}
-
-/*! Font-weight  */
-.mbr-light {
-  font-weight: 300;
-}
-
-.mbr-regular {
-  font-weight: 400;
-}
-
-.mbr-semibold {
-  font-weight: 500;
-}
-
-.mbr-bold {
-  font-weight: 700;
 }
 
 /*! Media  */
@@ -236,6 +195,7 @@ section .mbr-background-video-preview {
   .media-container-row {
     flex-wrap: nowrap;
   }
+
 }
 figure {
   margin-bottom: 0;
@@ -272,15 +232,10 @@ iframe {
   margin: 0 auto;
 }
 
-.mbr-figure {
-  align-self: center;
-}
-
 .media-container > div {
   max-width: 100%;
 }
 
-.mbr-figure img,
 .card-img img {
   width: 100%;
 }
@@ -292,12 +247,10 @@ iframe {
   .media {
     width: auto;
   }
-  .mbr-figure {
-    width: 100% !important;
-  }
+
 }
 /*! Buttons */
-.mbr-section-btn {
+.section-buttons {
   margin-left: -0.6rem;
   margin-right: -0.6rem;
   font-size: 0;
@@ -341,55 +294,27 @@ iframe {
   cursor: pointer;
 }
 
-nav .mbr-section-btn {
+nav .section-buttons {
   margin-left: 0rem;
   margin-right: 0rem;
 }
 
 /*! Btn icon margin */
-.btn .mbr-iconfont,
-.btn.btn-sm .mbr-iconfont {
+.btn .icon,
+.btn.btn-sm .icon {
   order: 1;
   cursor: pointer;
   margin-left: 0.5rem;
   vertical-align: sub;
 }
 
-.btn.btn-md .mbr-iconfont,
-.btn.btn-md .mbr-iconfont {
+.btn.btn-md .icon,
+.btn.btn-md .icon {
   margin-left: 0.8rem;
-}
-
-.mbr-regular {
-  font-weight: 400;
-}
-
-.mbr-semibold {
-  font-weight: 500;
-}
-
-.mbr-bold {
-  font-weight: 700;
 }
 
 [type=submit] {
   -webkit-appearance: none;
-}
-
-/*! Full-screen */
-.mbr-fullscreen .mbr-overlay {
-  min-height: 100vh;
-}
-
-.mbr-fullscreen {
-  display: flex;
-  display: -moz-flex;
-  display: -ms-flex;
-  display: -o-flex;
-  align-items: center;
-  min-height: 100vh;
-  padding-top: 3rem;
-  padding-bottom: 3rem;
 }
 
 /*! Map */
@@ -400,88 +325,6 @@ nav .mbr-section-btn {
 .map iframe {
   width: 100%;
   height: 100%;
-}
-
-/*! Scroll to top arrow */
-.mbr-arrow-up {
-  bottom: 25px;
-  right: 90px;
-  position: fixed;
-  text-align: right;
-  z-index: 5000;
-  color: #ffffff;
-  font-size: 22px;
-}
-
-.mbr-arrow-up a {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 50%;
-  color: #fff;
-  display: inline-block;
-  height: 60px;
-  width: 60px;
-  border: 2px solid #fff;
-  outline-style: none !important;
-  position: relative;
-  text-decoration: none;
-  transition: all 0.3s ease-in-out;
-  cursor: pointer;
-  text-align: center;
-}
-.mbr-arrow-up a:hover {
-  background-color: rgba(0, 0, 0, 0.4);
-}
-.mbr-arrow-up a i {
-  line-height: 60px;
-}
-
-.mbr-arrow-up-icon {
-  display: block;
-  color: #fff;
-}
-
-.mbr-arrow-up-icon::before {
-  content: "›";
-  display: inline-block;
-  font-family: serif;
-  font-size: 22px;
-  line-height: 1;
-  font-style: normal;
-  position: relative;
-  top: 6px;
-  left: -4px;
-  transform: rotate(-90deg);
-}
-
-/*! Arrow Down */
-.mbr-arrow {
-  position: absolute;
-  bottom: 45px;
-  left: 50%;
-  width: 60px;
-  height: 60px;
-  cursor: pointer;
-  background-color: rgba(80, 80, 80, 0.5);
-  border-radius: 50%;
-  transform: translateX(-50%);
-}
-@media (max-width: 767px) {
-  .mbr-arrow {
-    display: none;
-  }
-}
-.mbr-arrow > a {
-  display: inline-block;
-  text-decoration: none;
-  outline-style: none;
-  animation: arrowdown 1.7s ease-in-out infinite;
-  color: #ffffff;
-}
-.mbr-arrow > a > i {
-  position: absolute;
-  top: -2px;
-  left: 15px;
-  font-size: 2rem;
 }
 
 #scrollToTop a i::before {
@@ -508,13 +351,6 @@ nav .mbr-section-btn {
     transform: translateY(0px);
   }
 }
-@media (max-width: 500px) {
-  .mbr-arrow-up {
-    left: 0;
-    right: 0;
-    text-align: center;
-  }
-}
 /*Gradients animation*/
 @keyframes gradient-animation {
   from {
@@ -532,54 +368,58 @@ nav .mbr-section-btn {
   -webkit-animation: gradient-animation 5s infinite alternate;
 }
 
-.menu .navbar-brand {
+.site-nav .navbar-brand {
   display: -webkit-flex;
 }
-.menu .navbar-brand span {
+.site-nav .navbar-brand span {
   display: flex;
   display: -webkit-flex;
 }
-.menu .navbar-brand .navbar-caption-wrap {
+.site-nav .navbar-brand .navbar-caption-wrap {
   display: -webkit-flex;
 }
-.menu .navbar-brand .navbar-logo img {
+.site-nav .navbar-brand .navbar-logo img {
   display: -webkit-flex;
   width: auto;
 }
 @media (min-width: 768px) and (max-width: 991px) {
-  .menu .navbar-toggleable-sm .navbar-nav {
+  .site-nav .navbar-toggleable-sm .navbar-nav {
     display: -ms-flexbox;
   }
+
 }
 @media (max-width: 991px) {
-  .menu .navbar-collapse {
+  .site-nav .navbar-collapse {
     max-height: 93.5vh;
   }
-  .menu .navbar-collapse.show {
+  .site-nav .navbar-collapse.show {
     overflow: auto;
   }
+
 }
 @media (min-width: 992px) {
-  .menu .navbar-nav.nav-dropdown {
+  .site-nav .navbar-nav.nav-dropdown {
     display: -webkit-flex;
   }
-  .menu .navbar-toggleable-sm .navbar-collapse {
+  .site-nav .navbar-toggleable-sm .navbar-collapse {
     display: -webkit-flex !important;
   }
-  .menu .collapsed .navbar-collapse {
+  .site-nav .collapsed .navbar-collapse {
     max-height: 93.5vh;
   }
-  .menu .collapsed .navbar-collapse.show {
+  .site-nav .collapsed .navbar-collapse.show {
     overflow: auto;
   }
+
 }
 @media (max-width: 767px) {
-  .menu .navbar-collapse {
+  .site-nav .navbar-collapse {
     max-height: 80vh;
   }
+
 }
 
-.nav-link .mbr-iconfont {
+.nav-link .icon {
   margin-right: 0.5rem;
 }
 
@@ -680,6 +520,7 @@ input[type=range] {
   .modal-dialog .carousel-inner {
     height: calc(100vh - 1rem);
   }
+
 }
 
 .carousel-item {
@@ -730,7 +571,7 @@ input[type=range] {
   width: auto;
 }
 
-.menu .navbar.collapsed:not(.beta-menu) {
+.site-nav .navbar.collapsed:not(.beta-menu) {
   flex-direction: column;
 }
 
@@ -823,7 +664,7 @@ form .row [class*=col] {
   padding-right: 0.6rem;
 }
 
-form .mbr-section-btn {
+form .section-buttons {
   padding-left: 0.6rem;
   padding-right: 0.6rem;
 }
@@ -855,18 +696,6 @@ form .btn {
 
 :focus {
   outline: none;
-}
-
-.mbr-overlay {
-  background-color: #000;
-  bottom: 0;
-  left: 0;
-  opacity: 0.5;
-  position: absolute;
-  right: 0;
-  top: 0;
-  z-index: 0;
-  pointer-events: none;
 }
 
 blockquote {
@@ -912,12 +741,7 @@ blockquote {
     padding-left: 32px;
     padding-right: 32px;
   }
-}
-@media (max-width: 991px) {
-  .mbr-container {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
+
 }
 .app-video-wrapper > img {
   opacity: 1;
@@ -942,19 +766,6 @@ blockquote {
 .dropdown-item:hover + .dropdown-menu,
 .dropdown-menu:hover {
   display: block;
-}
-
-@media (min-aspect-ratio: 16/9) {
-  .mbr-video-foreground {
-    height: 300% !important;
-    top: -100% !important;
-  }
-}
-@media (max-aspect-ratio: 16/9) {
-  .mbr-video-foreground {
-    width: 300% !important;
-    left: -100% !important;
-  }
 }.engine {
 	position: absolute;
 	text-indent: -2400px;

@@ -1,9 +1,9 @@
 /*
- * Layout fixes layered over the Mobirise export. Loaded last on every page.
+ * Layout fixes layered over base.css and sections.css (the original site's styles). Loaded last on
+ * every page.
  *
- * - Selectors target Mobirise block-type classes (footer3, contacts01, contacts03), not the
- *   generated `cid-*` hashes, so one rule covers every page using that block.
- *   `section.` prefixes raise specificity above the `.cid-*` rules in sections.css.
+ * - Selectors target section classes (site-footer, contact-cards, embed-section), so one rule covers
+ *   every page using that section. `section.` prefixes raise specificity above sections.css rules.
  * - Spacing and sizing only. Colors belong in content/theme.yaml, never here.
  * - Interim: this file goes away when pages move to templates (see docs/PROJECT_LOG.md).
  */
@@ -24,19 +24,19 @@ main > section:last-child {
   flex-grow: 1;
 }
 
-/* Footer: Mobirise pads 6rem top and bottom, leaving ~1.5cm of empty purple under the copyright.
-   Its menu links were 32px (display-5) with 16px under each, and the copyright 22px (display-7),
+/* Footer: sections.css pads 6rem top and bottom, leaving ~1.5cm of empty space under the copyright.
+   Its menu links were 32px (type-heading) with 16px under each, and the copyright 22px (type-body),
    so the footer outweighed the page. Social icon bubbles keep their size. */
-section.footer3 {
+section.site-footer {
   padding-top: 1.5rem;
   padding-bottom: 1.25rem;
 }
-section.footer3 .header-menu-item {
+section.site-footer .footer-menu-item {
   font-size: 1.25rem;
   line-height: 1.5;
   padding-bottom: 0;
 }
-section.footer3 .copyright {
+section.site-footer .copyright {
   font-size: 0.875rem;
   line-height: 1.5;
   margin-bottom: 0;
@@ -44,21 +44,21 @@ section.footer3 .copyright {
 
 /* Contact page: 10rem top padding is well beyond what clearing the fixed navbar needs,
    and cards carry 36px padding plus a trailing paragraph margin. */
-section.contacts01 {
+section.contact-cards {
   padding-top: 8.5rem;
   padding-bottom: 2.5rem;
 }
-section.contacts01 .mbr-section-title {
+section.contact-cards .section-title {
   margin-bottom: 1.5rem;
 }
-section.contacts01 .item {
+section.contact-cards .item {
   margin-bottom: 1.5rem;
 }
-section.contacts01 .item-wrapper {
+section.contact-cards .item-wrapper {
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;
 }
-section.contacts01 .item-wrapper p:last-child {
+section.contact-cards .item-wrapper p:last-child {
   margin-bottom: 0;
 }
 
@@ -66,55 +66,55 @@ section.contacts01 .item-wrapper p:last-child {
    scrolled inside its own frame. Size the frame to the form's full height instead; it's cross-origin,
    so it can't size itself. Heights measured from the live form (3 questions).
    Scoped to `.embed-form`: the calendar page uses the same block. */
-section.contacts03 .embed-form,
-section.contacts03 .embed-form iframe {
+section.embed-section .embed-form,
+section.embed-section .embed-form iframe {
   height: 850px;
 }
-section.contacts03 .embed-form {
+section.embed-section .embed-form {
   border-radius: 1.5rem;
   overflow: hidden;
 }
 @media (max-width: 767px) {
-  section.contacts03 .embed-form,
-  section.contacts03 .embed-form iframe {
+  section.embed-section .embed-form,
+  section.embed-section .embed-form iframe {
     height: 1010px;
   }
 }
 
 /* Calendar: subscribe buttons wrap under each other on narrow columns. */
-section.contacts03 .calendar-subscribe {
+section.embed-section .calendar-subscribe {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
-section.contacts03 .calendar-subscribe .btn {
+section.embed-section .calendar-subscribe .btn {
   margin: 0;
 }
 
 /* Social icons: inline SVGs of the Socicon WOFF2 glyphs (replacing the font) sized and colored like the glyphs they
-   replace, so the per-section .mbr-iconfont rules (font-size, color) still apply. */
+   replace, so the per-section .icon rules (font-size, color) still apply. */
 .social-icon { display: inline-block; line-height: 0; vertical-align: -0.0625em; } /* glyph descent was 64/1024 em */
 .social-icon > svg { display: block; width: 1em; height: 1em; fill: currentColor; }
 /* The glyphs fill their em box edge to edge, so at the section font sizes they read small: nav icons
    (24px) looked undersized next to the logo, and footer icons (32px) left the 72px bubbles mostly empty. */
-.iconfont-wrapper .social-icon > svg { width: 1.25em; height: 1.25em; }
-.soc-item .social-icon > svg { width: 1.3em; height: 1.3em; }
+.nav-social-link .social-icon > svg { width: 1.25em; height: 1.25em; }
+.social-item .social-icon > svg { width: 1.3em; height: 1.3em; }
 
 /* Accessibility: member-card subtitles are <div>s (not headings), so restore the 1.2 line height the
-   generated .cid-* h6 rule gave them. The skip link (Bootstrap's visually-hidden-focusable) sits
+   old h6 rule gave them. The skip link (Bootstrap's visually-hidden-focusable) sits
    above the page when focused instead of pushing the flex layout down. */
-.gallery3 .item-subtitle { line-height: 1.2; }
+.member-grid .item-subtitle { line-height: 1.2; }
 .skip-link:focus { position: absolute; top: 0.5rem; left: 0.5rem; z-index: 1100; width: max-content; padding: 0.5rem 1rem; }
 
 /* Homepage hero: on very wide screens the 8/12-column photo grows taller than the viewport. Cap it at
    65vh and crop (centered) instead of letting the page open on nothing but photo. On 16:9 screens it
    is already ~62vh, so the cap only engages on ultrawide or short windows. */
-section.header1 .image-wrapper img { max-height: 65vh; object-fit: cover; }
+section.hero .image-wrapper img { max-height: 65vh; object-fit: cover; }
 
 /* Moved out of inline style attributes (html-validate: no-inline-style). */
 /* Specificity (0,4,1) + loading last matches the old inline style: beats the plugin's 50px and the
    scrolled-state (.navbar-short) 2rem rule; the phone-width rule is !important and still applies. */
-.menu .navbar.navbar-dropdown .navbar-logo img { height: 3rem; }
+.site-nav .navbar.navbar-dropdown .navbar-logo img { height: 3rem; }
 .google-map iframe { border: 0; }
 /* The hamburger is a <span> now (a <div> isn't allowed inside <button>); keep it a block box. */
 .navbar-toggler .hamburger { display: block; }
