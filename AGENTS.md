@@ -48,7 +48,7 @@ public/assets/vendor/  third-party libraries, unmodified: Bootstrap 5.3.8 (npm d
 public/assets/js/      first-party scripts (small, page-specific: spin-on-click.js)
 public/404.html        served for unknown URLs (root-absolute links: it's served at any depth)
 public/assets/images/  images, one folder per class (members/, teams/; see image-limits)
-src/app.mts            static site handler mimicking Cloudflare Pages: clean URLs, _redirects, 404.html, /healthz
+src/app.mts            static site handler mimicking Cloudflare Pages: clean URLs, _redirects, 404.html, hides Pages config files, /healthz
 src/server.mts         entry point: env config, listen, SIGTERM
 src/theme.mts          theme.yaml loading, validation, CSS-variable flattening
 src/site.mts           site.yaml loading/validation; named links (calendar-google, calendar-webcal, calendar-ics)

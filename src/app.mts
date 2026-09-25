@@ -3,12 +3,13 @@
  * start it on an ephemeral port against any directory.
  *
  * It mimics Cloudflare Pages, so local testing matches the live site: `_redirects` rules, clean
- * URLs (`/about.html` and `/about/` redirect to `/about`), and `404.html` for anything missing.
+ * URLs (`/about.html` and `/about/` redirect to `/about`), `404.html` for anything missing, and Pages'
+ * own config files (`_redirects`, `_headers`) are never served.
  */
 import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { extname, join, normalize, resolve, sep } from 'node:path';
+import { extname, join, normalize, relative, resolve, sep } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { renderPage } from './render.mts';
 import { loadSite, siteLinks } from './site.mts';
@@ -33,10 +34,13 @@ const MIME_TYPES: Readonly<Record<string, string>> = {
   '.xml': 'application/xml',
 };
 
+/** Files Pages reads as configuration and never serves (checked against `wrangler pages dev`). */
+const PAGES_CONFIG_FILES: ReadonlySet<string> = new Set(['_redirects', '_headers', '_routes.json', '_worker.js']);
+
 /**
  * Maps a URL path to a file under `root`, mirroring Cloudflare Pages semantics:
  * `/` and directories resolve to `index.html`, and extensionless paths try `<path>.html`.
- * Returns `undefined` for anything missing or outside `root` (path traversal).
+ * Returns `undefined` for anything missing, outside `root` (path traversal), or a Pages config file.
  * `root` must be absolute and normalized; `createSiteServer` guarantees this.
  */
 export async function resolveFile(root: string, urlPath: string): Promise<string | undefined> {
@@ -48,6 +52,8 @@ export async function resolveFile(root: string, urlPath: string): Promise<string
   }
   const base = join(root, normalize(decoded));
   if (base !== root && !base.startsWith(root + sep)) return undefined;
+  // Checked after decoding and normalizing, so /%5Fredirects or /x/../_headers can't reach them either.
+  if (PAGES_CONFIG_FILES.has(relative(root, base))) return undefined;
 
   const candidates = extname(base) ? [base] : [base, `${base}.html`, join(base, 'index.html')];
   for (const candidate of candidates) {
@@ -123,10 +129,14 @@ async function handle(root: string, sitePath: string, req: IncomingMessage, res:
     return;
   }
 
-  // Clean URLs, as Pages serves them: /about.html → /about, /index.html → /, /about/ → /about.
+  // Clean URLs, as Pages serves them: /about.html → /about, /index.html and /index → /, /about/ → /about.
   if (pathname.endsWith('.html') && (await resolveFile(root, pathname))) {
     const clean = pathname.slice(0, -'.html'.length).replace(/(^|\/)index$/, '$1');
     redirect(res, 308, clean + url.search);
+    return;
+  }
+  if (/(^|\/)index$/.test(pathname) && (await resolveFile(root, `${pathname}.html`))) {
+    redirect(res, 308, pathname.slice(0, -'index'.length) + url.search);
     return;
   }
   if (pathname.length > 1 && pathname.endsWith('/') && (await resolveFile(root, pathname.slice(0, -1) + '.html'))) {

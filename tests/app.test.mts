@@ -33,7 +33,7 @@ describe('site server', () => {
   });
 
   it('redirects .html and trailing-slash URLs to the clean URL, like Cloudflare Pages', async () => {
-    for (const [from, to] of [['/members.html', '/members'], ['/index.html', '/'], ['/members/', '/members'], ['/members.html?x=1', '/members?x=1']]) {
+    for (const [from, to] of [['/members.html', '/members'], ['/index.html', '/'], ['/index', '/'], ['/members/', '/members'], ['/members.html?x=1', '/members?x=1']]) {
       const res = await get(from);
       assert.equal(res.status, 308, from);
       assert.equal(res.headers.get('location'), to, from);
@@ -44,6 +44,14 @@ describe('site server', () => {
     const res = await get('/mailinglist');
     assert.equal(res.status, 301);
     assert.equal(res.headers.get('location'), '/mailing-list');
+  });
+
+  it("never serves Pages' own config files, however the path is spelled", async () => {
+    for (const path of ['/_redirects', '/_headers', '/%5Fredirects', '/assets/../_headers']) {
+      const res = await get(path);
+      assert.equal(res.status, 404, path);
+      assert.match(await res.text(), /Page not found/, path);
+    }
   });
 
   it('makes un-fingerprinted assets revalidate, answering 304 when unchanged', async () => {

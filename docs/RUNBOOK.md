@@ -63,7 +63,7 @@ The complete list. A test fails if a script in `package.json` isn't in this tabl
 
 | Command | What it does | When to use it |
 |---|---|---|
-| `npm start` | Runs the site locally at http://localhost:8080. Pages are rebuilt on every request, so edits show on reload. Behaves like Cloudflare Pages: clean URLs (`/about`; `/about.html` redirects there), `public/_redirects` rules, and the 404 page for unknown URLs | Day-to-day development |
+| `npm start` | Runs the site locally at http://localhost:8080. Pages are rebuilt on every request, so edits show on reload. Behaves like Cloudflare Pages: clean URLs (`/about`; `/about.html` redirects there), `public/_redirects` rules, the 404 page for unknown URLs, and never serving Cloudflare's own config files (`_redirects`, `_headers`) | Day-to-day development |
 | `npm run start:dist` | Serves the exported `dist/` folder instead, exactly as it will be deployed | Final check before a manual deploy (run `npm run export` first) |
 | `npm run export` | Builds the deployable site into `dist/` (see below) | Before a manual deploy; Cloudflare Pages runs it automatically |
 | `npm test` | Runs the automated tests ([§10](#10-tests-and-checks)) | Before every commit |
@@ -267,7 +267,7 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 
 | File | What it guarantees |
 |---|---|
-| `tests/app.test.mts` | The local server behaves like Cloudflare Pages: pages load at `/` and without `.html`, `.html` and trailing-slash URLs redirect to the clean URL, `_redirects` rules are followed (and unsupported rule syntax is rejected), unknown URLs get the 404 page with a 404 status; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
+| `tests/app.test.mts` | The local server behaves like Cloudflare Pages: pages load at `/` and without `.html`, `.html`, `/index` and trailing-slash URLs redirect to the clean URL, Cloudflare's config files (`_redirects`, `_headers`) are never served, `_redirects` rules are followed (and unsupported rule syntax is rejected), unknown URLs get the 404 page with a 404 status; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
 | `tests/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs, relative or root-absolute (`/assets/…`) |
 | `tests/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
 | `tests/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
