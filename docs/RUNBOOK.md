@@ -272,6 +272,7 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 | `tests/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
 | `tests/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
 | `tests/contrast.test.mts` | Contrast math (WCAG 2.1 ratios, 4.5:1 text, 3:1 large text and icons, see-through backgrounds), that every theme color is in a checked pair, and that the site's colors pass except for listed waivers (and no waiver is left over once fixed) |
+| `tests/members-order.test.mts` | The members page lists everyone by seniority (graduation year, then last name, then first name; no year yet = last) in the Executive Board, Active Members, and Alumni, so order never depends on who edited last |
 | `tests/redirects.test.mts` | `public/_redirects` is well-formed, every old URL points at a page that exists, and no redirect hides a page that still exists |
 | `tests/theme.test.mts` | The color rules for `theme.yaml`: real hex values only, no color names or references, correct naming, valid team list |
 | `tests/images.test.mts` | Reading image dimensions, and the image rules: per-folder size limits, every class has limits, exceptions need a reason, no duplicates, no leftover exceptions, member portrait and team photo naming |
