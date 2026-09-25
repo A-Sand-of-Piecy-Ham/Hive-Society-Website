@@ -117,6 +117,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-25: Mailing-list form no longer scrolls inside its frame: frame heights set per breakpoint from the live form's tallest state (submitted empty, with error messages), verified at 24 screen widths from 320 to 1920 px. Frame scrolling kept as a fallback if the form grows; re-measure when `check:form` flags question changes.
 - 2026-09-24: New members' class years filled from the audition sheet's expected graduation semester (Glen: Fall '30); Active Members re-sorted by seniority. Quentin Ruffo's name corrected (sheet spelling; portrait renamed). New quips for Ryan, Kedzie, Greg and Mihika, plus quip updates for Colin, Usman, Aarush and Liam.
 - 2026-09-24: Local server checked against `wrangler pages dev` (Cloudflare's emulator) on 30 URLs; it now also redirects `/index` → `/` and never serves Pages config files (`_redirects`, `_headers`, `_routes.json`, `_worker.js`). Remaining differences are intentional: `/healthz` (Kubernetes probe) and equivalent cache headers (`no-cache` + Last-Modified vs Pages' `max-age=0, must-revalidate` + ETag).
 - 2026-09-24: Executive Board rows evenly spaced (the leftover per-row Mobirise padding removed; only the last row keeps extra space before Active Members). Webmaster rainbow darkened so every color is at least 4.5:1 on the yellow page.
