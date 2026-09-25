@@ -1697,11 +1697,6 @@ a {
 .feature-row:where(.feature-row--image-right) .row {
   flex-direction: row-reverse;
 }
-.feature-row:where(.feature-row--space-above) {
-  padding-top: 4rem;
-  padding-bottom: 1rem;
-  background-color: #ffeb69;
-}
 .feature-row:where(.feature-row--space-below) {
   padding-top: 1rem;
   padding-bottom: 4rem;

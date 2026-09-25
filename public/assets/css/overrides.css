@@ -148,9 +148,10 @@ section.hero .image-wrapper img { max-height: 65vh; object-fit: cover; }
 .member-grid .item-img img[src$="portrait-placeholder.jpg"] { object-position: right center; }
 
 /* Special webmaster card :P animated rainbow text. People who ask their OS for reduced
-   motion get the gradient without the animation. */
+   motion get the gradient without the animation. Every stop is darkened to at least 4.5:1 against
+   the yellow page (pure yellow and green were ~1.1:1), so each letter stays readable. */
 .rainbow-text {
-  background: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+  background: linear-gradient(to right, #d20000, #ad4800, #6b6a00, #007800, #0000ff, #4b0082, #9400d3, #d20000);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
