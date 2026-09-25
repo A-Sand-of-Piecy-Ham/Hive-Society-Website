@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
 import { after, before, describe, it } from 'node:test';
-import { createSiteServer } from '../src/app.mts';
+import { createSiteServer, parseRedirects } from '../src/app.mts';
 
 const server = createSiteServer('public');
 let base = '';
@@ -27,9 +27,23 @@ describe('site server', () => {
   });
 
   it('serves pages without the .html extension, like Cloudflare Pages', async () => {
-    const [bare, withExt] = await Promise.all([get('/members'), get('/members.html')]);
-    assert.equal(bare.status, 200);
-    assert.equal(await bare.text(), await withExt.text());
+    const res = await get('/members');
+    assert.equal(res.status, 200);
+    assert.match(await res.text(), /<title>[^<]*Members/);
+  });
+
+  it('redirects .html and trailing-slash URLs to the clean URL, like Cloudflare Pages', async () => {
+    for (const [from, to] of [['/members.html', '/members'], ['/index.html', '/'], ['/members/', '/members'], ['/members.html?x=1', '/members?x=1']]) {
+      const res = await get(from);
+      assert.equal(res.status, 308, from);
+      assert.equal(res.headers.get('location'), to, from);
+    }
+  });
+
+  it('follows public/_redirects rules', async () => {
+    const res = await get('/mailinglist');
+    assert.equal(res.status, 301);
+    assert.equal(res.headers.get('location'), '/mailing-list');
   });
 
   it('makes un-fingerprinted assets revalidate, answering 304 when unchanged', async () => {
@@ -60,8 +74,10 @@ describe('site server', () => {
     assert.equal(await res.text(), 'ok');
   });
 
-  it('returns 404 for missing files', async () => {
-    assert.equal((await get('/nope')).status, 404);
+  it('answers missing pages with the 404 page and a 404 status', async () => {
+    const res = await get('/nope');
+    assert.equal(res.status, 404);
+    assert.match(await res.text(), /Page not found/);
   });
 
   it('refuses path traversal, including encoded separators', async () => {
@@ -84,5 +100,16 @@ describe('site server', () => {
     const res = await get('/', { method: 'HEAD' });
     assert.equal(res.status, 200);
     assert.equal(await res.text(), '');
+  });
+});
+
+describe('parseRedirects', () => {
+  it('reads rules, skipping comments and blank lines, defaulting to 302', () => {
+    const rules = parseRedirects('# old pages\n\n/a /b 301\n/c   /d\n');
+    assert.deepEqual([...rules], [['/a', { to: '/b', status: 301 }], ['/c', { to: '/d', status: 302 }]]);
+  });
+
+  it('rejects splats and placeholders instead of silently ignoring them', () => {
+    assert.throws(() => parseRedirects('/blog/* /news/:splat 301'), /splat or placeholder/);
   });
 });

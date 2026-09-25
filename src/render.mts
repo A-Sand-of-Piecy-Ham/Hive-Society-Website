@@ -18,7 +18,8 @@ export interface RenderContext {
 }
 
 const TAG_WITH_SITE_LINK = /<a\b[^>]*\bdata-site-link="([^"]+)"[^>]*>/g;
-const ASSET_ATTR = /\b(href|src)="(assets\/[^"?#]+)(?:\?[^"#]*)?(#[^"]*)?"/g;
+/** `assets/…` or root-absolute `/assets/…` (the 404 page uses absolute URLs: it's served at any depth). */
+const ASSET_ATTR = /\b(href|src)="(\/?)(assets\/[^"?#]+)(?:\?[^"#]*)?(#[^"]*)?"/g;
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -34,9 +35,9 @@ export function renderPage(html: string, ctx: RenderContext): string {
 
   const { assetVersion } = ctx;
   if (assetVersion) {
-    out = out.replace(ASSET_ATTR, (whole: string, attr: string, path: string, hash: string | undefined) => {
+    out = out.replace(ASSET_ATTR, (whole: string, attr: string, slash: string, path: string, hash: string | undefined) => {
       const version = assetVersion(path);
-      return version ? `${attr}="${path}?v=${version}${hash ?? ''}"` : whole;
+      return version ? `${attr}="${slash}${path}?v=${version}${hash ?? ''}"` : whole;
     });
   }
   return out;

@@ -28,6 +28,7 @@ describe('renderPage: asset fingerprints', () => {
   it('versions local assets, replacing any existing query and keeping fragments', () => {
     const html = '<link href="assets/a.css?old=1"><img src="assets/a.css#x">';
     assert.equal(renderPage(html, { links, assetVersion }), '<link href="assets/a.css?v=v1"><img src="assets/a.css?v=v1#x">');
+    assert.equal(renderPage('<link href="/assets/a.css">', { links, assetVersion }), '<link href="/assets/a.css?v=v1">');
   });
 
   it('leaves unknown assets, pages, and external URLs alone', () => {

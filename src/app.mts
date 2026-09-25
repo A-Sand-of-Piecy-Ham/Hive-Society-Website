@@ -1,6 +1,9 @@
 /**
  * Static site HTTP server, separated from the entry point (`server.mts`) so tests can
  * start it on an ephemeral port against any directory.
+ *
+ * It mimics Cloudflare Pages, so local testing matches the live site: `_redirects` rules, clean
+ * URLs (`/about.html` and `/about/` redirect to `/about`), and `404.html` for anything missing.
  */
 import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
@@ -54,6 +57,34 @@ export async function resolveFile(root: string, urlPath: string): Promise<string
   return undefined;
 }
 
+/** One `_redirects` rule. */
+export interface Redirect {
+  to: string;
+  status: number;
+}
+
+/**
+ * Parses Cloudflare Pages `_redirects` (`<from> <to> [status]`, `#` comments, default 302).
+ * Only exact paths are supported; Pages' splats (`*`) and placeholders (`:name`) aren't, and a
+ * rule using them is rejected rather than silently never matching.
+ */
+export function parseRedirects(text: string): Map<string, Redirect> {
+  const rules = new Map<string, Redirect>();
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    if (line === '' || line.startsWith('#')) continue;
+    const [from = '', to = '', status = '302'] = line.split(/\s+/);
+    if (/[*:]/.test(from)) throw new Error(`_redirects: "${from}" uses a splat or placeholder, which the local server doesn't support`);
+    rules.set(from, { to, status: Number(status) });
+  }
+  return rules;
+}
+
+function redirect(res: ServerResponse, status: number, location: string): void {
+  res.writeHead(status, { Location: location, 'Cache-Control': 'no-cache' });
+  res.end();
+}
+
 function sendText(res: ServerResponse, status: number, body: string): void {
   res.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' });
   res.end(body);
@@ -84,9 +115,35 @@ async function handle(root: string, sitePath: string, req: IncomingMessage, res:
     return;
   }
 
+  // Read per request so edits to _redirects apply without a restart (it's a few lines).
+  const rules = parseRedirects(await readFile(join(root, '_redirects'), 'utf8').catch(() => ''));
+  const rule = rules.get(pathname);
+  if (rule) {
+    redirect(res, rule.status, rule.to);
+    return;
+  }
+
+  // Clean URLs, as Pages serves them: /about.html → /about, /index.html → /, /about/ → /about.
+  if (pathname.endsWith('.html') && (await resolveFile(root, pathname))) {
+    const clean = pathname.slice(0, -'.html'.length).replace(/(^|\/)index$/, '$1');
+    redirect(res, 308, clean + url.search);
+    return;
+  }
+  if (pathname.length > 1 && pathname.endsWith('/') && (await resolveFile(root, pathname.slice(0, -1) + '.html'))) {
+    redirect(res, 308, pathname.slice(0, -1) + url.search);
+    return;
+  }
+
   const file = await resolveFile(root, pathname);
   if (!file) {
-    sendText(res, 404, 'Not Found');
+    const notFound = await resolveFile(root, '/404.html');
+    if (!notFound) {
+      sendText(res, 404, 'Not Found');
+      return;
+    }
+    const html = renderPage(await readFile(notFound, 'utf8'), { links: siteLinks(await loadSite(sitePath)) });
+    res.writeHead(404, { 'Content-Type': MIME_TYPES['.html'] ?? 'text/html', 'Cache-Control': 'no-cache' });
+    res.end(req.method === 'HEAD' ? undefined : html);
     return;
   }
 

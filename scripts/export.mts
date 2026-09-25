@@ -42,7 +42,7 @@ async function renderPages(): Promise<void> {
   for (const page of pages) {
     const html = await readFile(join(OUT, page), 'utf8');
     // Resolve every referenced asset's version up front; renderPage itself is synchronous.
-    for (const [, path = ''] of html.matchAll(/\b(?:href|src)="(assets\/[^"?#]+)/g)) await versionOf(path);
+    for (const [, path = ''] of html.matchAll(/\b(?:href|src)="\/?(assets\/[^"?#]+)/g)) await versionOf(path);
     await writeFile(join(OUT, page), renderPage(html, { links, assetVersion: (p) => versions.get(p) }));
   }
 }
@@ -51,7 +51,7 @@ async function renderPages(): Promise<void> {
 async function pageUrls(): Promise<string[]> {
   const files = await readdir(OUT);
   return files
-    .filter((f) => f.endsWith('.html'))
+    .filter((f) => f.endsWith('.html') && f !== '404.html') // the 404 page isn't a destination
     .sort()
     .map((f) => (f === 'index.html' ? `${SITE_URL}/` : `${SITE_URL}/${f.slice(0, -'.html'.length)}`));
 }
