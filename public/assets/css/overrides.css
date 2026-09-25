@@ -119,23 +119,52 @@ section.hero .image-wrapper img { max-height: 65vh; object-fit: cover; }
 /* The hamburger is a <span> now (a <div> isn't allowed inside <button>); keep it a block box. */
 .navbar-toggler .hamburger { display: block; }
 
-/* Alumni: each name card filled a quarter-width column with its text left-aligned, so the names
-   hugged the left of each column and the grid looked slanted. A grid whose columns are only as
-   wide as their widest name (max-content), spread evenly, keeps each column's names on a shared
-   left edge while the column itself sits centered in its share of the row. Row-by-row reading
-   order and the one-column phone layout are unchanged. */
+/* Alumni: each name card filled a fixed-width column with its text left-aligned, so the names
+   hugged the left of each column and the grid looked slanted. Columns are now only as wide as their
+   widest name (max-content), so a column's names share a left edge, and the columns spread across
+   the full width (space-between, small side margin) like the original's airy layout. Column count
+   steps down with width so the longest name (~300px) never overflows: 5 → 4 → 2 → 1. Reading order
+   stays row by row. */
 .alumni-list .row:has(> .item) {
   display: grid;
   grid-template-columns: max-content;
   justify-content: center;
 }
-@media (min-width: 992px) {
-  .alumni-list .row:has(> .item) { grid-template-columns: repeat(4, max-content); justify-content: space-evenly; }
-}
 .alumni-list .row > .item { width: auto; max-width: none; }
+@media (min-width: 768px) {
+  .alumni-list .row:has(> .item) { grid-template-columns: repeat(2, max-content); justify-content: space-evenly; }
+}
+@media (min-width: 992px) {
+  .alumni-list .row:has(> .item) { grid-template-columns: repeat(4, max-content); justify-content: space-between; padding-inline: 3%; }
+}
+@media (min-width: 1400px) {
+  .alumni-list .row:has(> .item) { grid-template-columns: repeat(5, max-content); }
+}
 
 /* Member cards: portraits are square, the "photo coming soon" placeholder is 4:3. Rows mixing the
    two had uneven card heights, so every card image renders square; the placeholder keeps its right
    side, where the "?" is. */
 .member-grid .item-img img { aspect-ratio: 1; object-fit: cover; }
 .member-grid .item-img img[src$="portrait-placeholder.jpg"] { object-position: right center; }
+
+/* Special webmaster card :P animated rainbow text. People who ask their OS for reduced
+   motion get the gradient without the animation. */
+.rainbow-text {
+  background: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow-shift 4s linear infinite;
+}
+@keyframes rainbow-shift {
+  to { background-position: 200% center; }
+}
+.spin-on-click { cursor: pointer; }
+.spin-on-click.spinning { animation: spin-once 0.8s ease-in-out; }
+@keyframes spin-once {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rainbow-text, .spin-on-click.spinning { animation: none; }
+}

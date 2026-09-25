@@ -63,7 +63,7 @@ The complete list. A test fails if a script in `package.json` isn't in this tabl
 
 | Command | What it does | When to use it |
 |---|---|---|
-| `npm start` | Runs the site locally at http://localhost:8080. Pages are rebuilt on every request, so edits show on reload | Day-to-day development |
+| `npm start` | Runs the site locally at http://localhost:8080. Pages are rebuilt on every request, so edits show on reload. Behaves like Cloudflare Pages: clean URLs (`/about`; `/about.html` redirects there), `public/_redirects` rules, and the 404 page for unknown URLs | Day-to-day development |
 | `npm run start:dist` | Serves the exported `dist/` folder instead, exactly as it will be deployed | Final check before a manual deploy (run `npm run export` first) |
 | `npm run export` | Builds the deployable site into `dist/` (see below) | Before a manual deploy; Cloudflare Pages runs it automatically |
 | `npm test` | Runs the automated tests ([§10](#10-tests-and-checks)) | Before every commit |
@@ -267,16 +267,16 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 
 | File | What it guarantees |
 |---|---|
-| `tests/app.test.mts` | The local server: pages load at `/` and without `.html`; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; missing pages give 404; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
-| `tests/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs |
+| `tests/app.test.mts` | The local server behaves like Cloudflare Pages: pages load at `/` and without `.html`, `.html` and trailing-slash URLs redirect to the clean URL, `_redirects` rules are followed (and unsupported rule syntax is rejected), unknown URLs get the 404 page with a 404 status; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
+| `tests/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs, relative or root-absolute (`/assets/…`) |
 | `tests/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
 | `tests/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
 | `tests/contrast.test.mts` | Contrast math (WCAG 2.1 ratios, 4.5:1 text, 3:1 large text and icons, see-through backgrounds), that every theme color is in a checked pair, and that the site's colors pass except for listed waivers (and no waiver is left over once fixed) |
-| `tests/members-order.test.mts` | The members page lists everyone by seniority (graduation year, then last name, then first name; no year yet = last) in the Executive Board, Active Members, and Alumni, so order never depends on who edited last |
+| `tests/members-order.test.mts` | The members page order is fixed by rule, so it never depends on who edited last: Executive Board by position rank, then seniority; Active Members and Alumni by seniority (graduation year, then last name, then first name; no year yet = last). An unranked board role fails the test |
 | `tests/redirects.test.mts` | `public/_redirects` is well-formed, every old URL points at a page that exists, and no redirect hides a page that still exists |
 | `tests/theme.test.mts` | The color rules for `theme.yaml`: real hex values only, no color names or references, correct naming, valid team list |
 | `tests/images.test.mts` | Reading image dimensions, and the image rules: per-folder size limits, every class has limits, exceptions need a reason, no duplicates, no leftover exceptions, member portrait and team photo naming |
-| `tests/site-links.test.mts` | Every link and image on every page points to a file that exists |
+| `tests/site-links.test.mts` | Every link and image on every page points to a file that exists, and links between pages use clean URLs (`about`, not `about.html`) |
 | `tests/docs.test.mts` | This runbook lists every npm script, every test file, and every allowed PR-title type |
 
 ### What CI runs (automatic testing)
