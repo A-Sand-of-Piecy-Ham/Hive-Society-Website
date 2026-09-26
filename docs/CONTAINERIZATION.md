@@ -42,7 +42,7 @@ docker run --rm --read-only --user 1000 -p 8080:8080 hive-site:dev   # → http:
 
 A **container registry** is to images what GitHub is to code: a place to upload versioned images so servers can download ("pull") them. **GHCR** (`ghcr.io`) is GitHub's registry, attached to this repository:
 
-- **Same accounts and permissions as the repo.** No separate service to manage; images from a private repo are private by default.
+- **Same accounts and permissions as the repo.** No separate service to manage. A newly pushed image is private by default, even from a public repo; see below.
 - **Provider-neutral.** Any host can pull from it, unlike a cloud provider's own registry (e.g. DigitalOcean's), which would tie the image to that provider.
 - **Versioned.** Each release is pushed as `ghcr.io/<owner>/hive-site:<version>`, and the production cluster runs the version named in `kube/overlays/prod/kustomization.yaml`. Rolling back means pointing at the previous tag.
 
@@ -54,7 +54,7 @@ docker build -t ghcr.io/<owner>/hive-site:<version> .
 docker push ghcr.io/<owner>/hive-site:<version>
 ```
 
-**Private images need cluster credentials.** Because the repo is private, its images are too, and the cluster must log in to pull them. Create a pull secret once (token with `read:packages`) and reference it from the Deployment as `imagePullSecrets` (not yet in the prod overlay; see [PROJECT_LOG.md](PROJECT_LOG.md)):
+**Private images need cluster credentials.** The source is public, so the simplest option is to make the package public (package page → Package settings → Change visibility); then the cluster pulls without logging in. If the image stays private, the cluster must log in: create a pull secret once (token with `read:packages`) and reference it from the Deployment as `imagePullSecrets` (not yet in the prod overlay; see [PROJECT_LOG.md](PROJECT_LOG.md)):
 
 ```bash
 kubectl -n hive create secret docker-registry ghcr-pull \

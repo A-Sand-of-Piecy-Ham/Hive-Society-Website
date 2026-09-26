@@ -12,7 +12,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 | 2026-09-23 | **Framework: Astro** (approved). Rationale recorded in README → Architecture | Content-heavy site maintained by non-coders: typed content collections, zero-JS default, static-first with optional Node adapter |
 | 2026-09-23 | Roster-removal override = officer-run `workflow_dispatch` ("Approve roster removal") that sets a status on the PR head SHA; officer allowlist in repo variable `ROSTER_OFFICERS`. No labels, tokens, or files | No lasting record of removals beyond git history; approval can't be self-granted by typing text; invalidated by new commits |
 | 2026-09-23 | Mailing-list form drift check: daily scheduled + on PRs touching form settings; not a required check | Catches deleted/re-created Google Form questions without letting a Google outage block merges |
-| 2026-09-23 | Repository is **private** for now; may be made public later (portfolio). Review history before publicizing | Roster history, including removals, would be public |
+| 2026-09-25 | Repository is **public** (supersedes the 2026-09-23 "private for now" decision). `main` is the default branch; changes land by squash-merged PR | Owner's choice. Roster history is public, so the roster-privacy rules apply to every commit and PR |
 | 2026-09-23 | Calendar: **build-time render from the public Google Calendar ICS** (approved). Mailing list: **native themed form posting to the existing Google Form** (approved) | Editors keep using Google tools; site gets themed UI |
 | 2026-09-23 | All footers charcoal `#232323` (matching home); was purple on 5 of 7 pages | Consistency; user choice |
 | 2026-09-23 | Caching: content-hash fingerprints on asset URLs at export + immutable `/assets/*`; HTML always revalidates. No "disable cache" switch | Stale assets become impossible rather than bypassable; a page query param can't affect subresource caching anyway |
@@ -111,12 +111,13 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 
 ### Housekeeping
 - [ ] Bootstrap from npm instead of vendored files (decided 2026-09-24: do it in the Astro migration, which installs it natively; Dependabot then updates it, patch/minor only until visual regression tests exist).
-- [ ] **On hold:** create the GitHub remote; enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push). A private repo on GitHub Free can't enforce it: get GitHub Pro (Student Developer Pack) or host under an org on Team.
+- [ ] Enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push); free now that the repo is public. See RUNBOOK → setup.
 - [ ] Set the real GHCR owner in `kube/overlays/prod/kustomization.yaml`.
-- [ ] Private repo ⇒ private GHCR images: add `imagePullSecrets: [{name: ghcr-pull}]` to the prod overlay (patch) and create the secret (see docs/CONTAINERIZATION.md).
+- [ ] GHCR image visibility: make the package public (repo is public; no cluster credentials needed), or keep it private and add `imagePullSecrets: [{name: ghcr-pull}]` to the prod overlay plus the secret (see docs/CONTAINERIZATION.md).
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-25: GitHub remote created (`A-Sand-of-Piecy-Ham/Hive-Society-Website`, public); `main` pushed and made the default branch; this branch merged by squash PR.
 - 2026-09-25: Mailing-list form no longer scrolls inside its frame: frame heights set per breakpoint from the live form's tallest state (submitted empty, with error messages), verified at 24 screen widths from 320 to 1920 px. Frame scrolling kept as a fallback if the form grows; re-measure when `check:form` flags question changes.
 - 2026-09-24: New members' class years filled from the audition sheet's expected graduation semester (Glen: Fall '30); Active Members re-sorted by seniority. Quentin Ruffo's name corrected (sheet spelling; portrait renamed). New quips for Ryan, Kedzie, Greg and Mihika, plus quip updates for Colin, Usman, Aarush and Liam.
 - 2026-09-24: Local server checked against `wrangler pages dev` (Cloudflare's emulator) on 30 URLs; it now also redirects `/index` → `/` and never serves Pages config files (`_redirects`, `_headers`, `_routes.json`, `_worker.js`). Remaining differences are intentional: `/healthz` (Kubernetes probe) and equivalent cache headers (`no-cache` + Last-Modified vs Pages' `max-age=0, must-revalidate` + ETag).

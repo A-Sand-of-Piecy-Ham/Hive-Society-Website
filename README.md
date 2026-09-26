@@ -89,7 +89,7 @@ Soon you'll be able to edit this file (and member lists, text, etc.) with a poin
 
 ## Contributing
 
-The repository is **private** (it holds roster history). It may be made public later; before that, review history for anything that shouldn't be public.
+The repository is **public**. Its history, including roster changes, is visible to anyone, so follow the roster-privacy rules (see AGENTS.md) in every commit message and PR.
 
 **`main` must be branch-protected, with CI gating merges.** Nobody pushes to `main` directly. Every change, including edits made through the site editor, lands through a pull request that:
 
@@ -98,7 +98,7 @@ The repository is **private** (it holds roster history). It may be made public l
 - is squash-merged (linear history, one commit per PR),
 - for code, infrastructure, or CI changes, has a developer's approval (content-only PRs may auto-merge on green; see the project log).
 
-Set this up in GitHub → Settings → Rules → Rulesets as soon as the repo has a remote. **Note:** on a *private* repository, branch protection and rulesets require GitHub Pro/Team (free for students via the GitHub Student Developer Pack); on GitHub Free they only work for public repos. Until protection is enforced, still work on branches.
+Set this up in GitHub → Settings → Rules → Rulesets (free for public repositories; see the RUNBOOK's setup section). Until protection is enforced, still work on branches.
 
 ## Versioning
 
