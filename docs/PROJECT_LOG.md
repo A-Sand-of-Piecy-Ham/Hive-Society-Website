@@ -1,7 +1,7 @@
 # Project log
 
 Running list of decisions and deferred work. Newest decisions first. Move a TODO to **Done** (with the date) rather than deleting it.
-When a decision changes conventions, commands, or layout, update [AGENTS.md](../AGENTS.md) and the README in the same change.
+When a decision changes conventions, commands, or layout, update [AGENTS.md](../AGENTS.md) and whichever doc describes it (README, [RUNBOOK](RUNBOOK.md), [ARCHITECTURE](ARCHITECTURE.md)) in the same change.
 
 ## Decisions
 
@@ -9,7 +9,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 |---|---|---|
 | 2026-09-23 | Calendar: source is the revived shows-only **"Hive Shows - Website Calendar"**; page shows a **month grid with an upcoming-shows list under it**; each show shows its Google Calendar **description** and its own **add-to-calendar** link; homepage features the **next show** (falls back to "Come See Us!"). Freshness: up to a week is acceptable, so a **daily scheduled rebuild** is plenty (no visitor-side JavaScript needed). **Build deferred** | User answers to calendar questions; a live API would be overkill for the required freshness |
 | 2026-09-23 | Images are limited per class by folder (`portraits` = `members/` 1080 px / 225 KB, sized for the large card so anyone can be promoted; `team-photos` = `teams/`; `other`), all classes required; portraits and team photos have naming rules. Team names are format-checked only | Every image has a limit; teams rename about yearly, so name ↔ data checks wait for a rename procedure |
-| 2026-09-23 | **Framework: Astro** (approved). Rationale recorded in README → Architecture | Content-heavy site maintained by non-coders: typed content collections, zero-JS default, static-first with optional Node adapter |
+| 2026-09-23 | **Framework: Astro** (approved). Rationale recorded in docs/ARCHITECTURE.md | Content-heavy site maintained by non-coders: typed content collections, zero-JS default, static-first with optional Node adapter |
 | 2026-09-23 | Roster-removal override = officer-run `workflow_dispatch` ("Approve roster removal") that sets a status on the PR head SHA; officer allowlist in repo variable `ROSTER_OFFICERS`. No labels, tokens, or files | No lasting record of removals beyond git history; approval can't be self-granted by typing text; invalidated by new commits |
 | 2026-09-23 | Mailing-list form drift check: daily scheduled + on PRs touching form settings; not a required check | Catches deleted/re-created Google Form questions without letting a Google outage block merges |
 | 2026-09-25 | Repository is **public** (supersedes the 2026-09-23 "private for now" decision). `main` is the default branch; changes land by squash-merged PR | Owner's choice. Roster history is public, so the roster-privacy rules apply to every commit and PR |
@@ -55,7 +55,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Commit message templates that satisfy the PR-title / Conventional Commits check.
 
 ### CI / testing
-- [ ] Roster check: a member removed from the active roster must appear in alumni (graduated *or* left); override via the officer-run "Approve roster removal" workflow (see decision). Needs members as data first. Set `ROSTER_OFFICERS` repo variable; consider short Actions log retention.
+- [ ] Roster check: a member removed from the active roster must appear in alumni (graduated *or* left); override via the officer-run "Approve roster removal" workflow (see decision). Needs members as data first. Set `ROSTER_OFFICERS` repo variable; consider short Actions log retention. When it ships, add the officer steps (RUNBOOK §9) to EDITING.md in plain words; they were removed while the check didn't exist.
 - [ ] Member ↔ portrait check: every member entry has a portrait (or an explicit "no photo") and every portrait belongs to a member; member ID = portrait base name. Not for teams until there's a rename procedure (rename photo, theme id, and data together; decide what happens to old names/alumni pages).
 - [ ] Playwright: functional tests across viewports (phone + desktop).
 - [ ] Playwright + axe: accessibility checks per page.
@@ -117,6 +117,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-26: Docs split by reader: README is a front page (quick start first, contents, an explained doc index, a short Planned section); rationale moved to new `docs/ARCHITECTURE.md` (stack today vs planned, why Astro, theme rules, caching); versioning detail lives only in RUNBOOK §5; EDITING.md drops the not-yet-built officer override steps.
 - 2026-09-25: GitHub remote created (`A-Sand-of-Piecy-Ham/Hive-Society-Website`, public); `main` pushed and made the default branch; this branch merged by squash PR.
 - 2026-09-25: Mailing-list form no longer scrolls inside its frame: frame heights set per breakpoint from the live form's tallest state (submitted empty, with error messages), verified at 24 screen widths from 320 to 1920 px. Frame scrolling kept as a fallback if the form grows; re-measure when `check:form` flags question changes.
 - 2026-09-24: New members' class years filled from the audition sheet's expected graduation semester (Glen: Fall '30); Active Members re-sorted by seniority. Quentin Ruffo's name corrected (sheet spelling; portrait renamed). New quips for Ryan, Kedzie, Greg and Mihika, plus quip updates for Colin, Usman, Aarush and Liam.

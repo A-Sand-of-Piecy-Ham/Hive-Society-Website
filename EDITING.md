@@ -18,17 +18,6 @@ The site editor isn't ready yet. Until then, ask a developer for anything not un
 - **Keep that calendar public**, or the site's calendar goes blank.
 - **Someone leaving the team moves to Alumni**, even if they quit. To leave someone off completely, ask an officer.
 
-## Officers: leaving someone off completely
-
-*(Coming soon, once members are in the site editor.)*
-
-A change that drops someone without moving them to Alumni gets blocked. To let it through:
-
-1. On GitHub, go to **Actions** → **Approve roster removal** → **Run workflow**.
-2. Type the change's number (the **#** next to its title) and click **Run workflow**.
-
-No reason is saved anywhere. If the change is edited afterwards, approve it again.
-
 ## Change not showing?
 
 1. Reload the page.
