@@ -22,7 +22,7 @@ Theme palette (from `mbr-additional.css`): purple `#593269` (text/brand), yellow
 ### Performance
 - *(Resolved at import: source images are now normalized to ~7 MB total. Responsive variants are still TODO.)*
 - **Total payload is 55 MB.** The homepage hero is an **8.4 MB PNG screenshot**, and one member photo is **10 MB** (`cachedimage-ilykeya.png`). Several others are 2–4 MB. Nothing is resized, and there's no `srcset`, no WebP/AVIF, and no `loading="lazy"` anywhere.
-- `mbr-additional.css` (166 KB) is the same file on every page, but each page requests it with a different `?v=` query. The browser treats those as different URLs and downloads it 7 times.
+- ~~`mbr-additional.css` (166 KB) was requested with a different `?v=` query on each page, so browsers downloaded it 7 times~~ (fixed 2026-09-23: one URL).
 - About 1 MB of Bootstrap and icon fonts are shipped for a handful of components.
 
 ### Mobile / layout
@@ -31,7 +31,7 @@ Theme palette (from `mbr-additional.css`): purple `#593269` (text/brand), yellow
 - The calendar and mailing list are fixed-size third-party iframes. They don't match the theme and are awkward on mobile.
 
 ### Accessibility / SEO (Lighthouse, mobile, members page: a11y 86, SEO 92)
-- `<html>` has no `lang` attribute, there's no `<main>` landmark, heading levels skip, and the social icon links have no accessible name.
+- ~~`<html>` has no `lang` attribute; social icon links have no accessible name~~ (fixed 2026-09-23). Still open: no `<main>` landmark, heading levels skip.
 - `robots.txt` and `sitemap.xml` return the homepage HTML (a Pages fallback), so both are invalid. **`npm run export` now generates real ones.**
 - The "Alumni" nav link points to `members.html#article11-15`, a Mobirise auto-generated ID that breaks when sections are reordered.
 - The copyright year is hard-coded.
@@ -39,7 +39,8 @@ Theme palette (from `mbr-additional.css`): purple `#593269` (text/brand), yellow
 ### Cleanup already done when importing into `public/`
 - Collapsed the `?v=`/`?f2bix4` query-string filenames into single files.
 - Decoded Cloudflare's email obfuscation back to a plain `mailto:` and removed the `/cdn-cgi/` script, since that only works when proxied through Cloudflare.
-- Left as-is on purpose: the Mobirise badge section and the Bootstrap markup. Both go away when the pages become templates (§5).
+- Removed the Mobirise badge section (spacer GIF + inline styles), builder meta tags and editor-only attributes, and the unused YouTube-background script (2026-09-23).
+- ~~Left as-is on purpose: the `cid-*` section classes that `mbr-additional.css` targets~~ (done 2026-09-24: renamed to readable section classes, `mbr-additional.css` → `sections.css` at 39 KB). The Bootstrap markup stays until the pages become templates (§5).
 
 ## 3. Where dynamic content, a database, or integrations fit
 

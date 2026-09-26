@@ -2,14 +2,16 @@
  * Static export: builds `dist/` from `public/` for hosts that only serve files
  * (Cloudflare Pages, DO Spaces/App Platform static, any nginx/Caddy).
  *
- * Today this is a copy plus generated `robots.txt` / `sitemap.xml` / `_headers`.
- * Once content moves to data files (see docs/site-audit.md), the render step slots in
- * between `clean` and `writeMeta`, and everything downstream stays the same.
+ * Steps: copy public/ → dist/, render every page (named links from content/site.yaml, `?v=<hash>`
+ * fingerprints on asset references; see src/render.mts), then write robots.txt / sitemap.xml / _headers.
  *
  * Usage: node scripts/export.mts   (SITE_URL=https://example.com to override the canonical origin)
  */
-import { cp, readdir, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { cp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { renderPage } from '../src/render.mts';
+import { loadSite, siteLinks } from '../src/site.mts';
 
 const SRC = resolve('public');
 const OUT = resolve('dist');
@@ -20,11 +22,36 @@ async function clean(): Promise<void> {
   await cp(SRC, OUT, { recursive: true });
 }
 
+/**
+ * Renders every page with site links and asset fingerprints. The version is a hash of the file's
+ * bytes, so it changes exactly when the file does. Missing files are left untouched here and caught
+ * by the link test.
+ */
+async function renderPages(): Promise<void> {
+  const links = siteLinks(await loadSite());
+  const versions = new Map<string, string | undefined>();
+  const versionOf = async (assetPath: string): Promise<string | undefined> => {
+    if (!versions.has(assetPath)) {
+      const bytes = await readFile(join(OUT, assetPath)).catch(() => undefined);
+      versions.set(assetPath, bytes && createHash('sha256').update(bytes).digest('hex').slice(0, 10));
+    }
+    return versions.get(assetPath);
+  };
+
+  const pages = (await readdir(OUT)).filter((f) => f.endsWith('.html'));
+  for (const page of pages) {
+    const html = await readFile(join(OUT, page), 'utf8');
+    // Resolve every referenced asset's version up front; renderPage itself is synchronous.
+    for (const [, path = ''] of html.matchAll(/\b(?:href|src)="\/?(assets\/[^"?#]+)/g)) await versionOf(path);
+    await writeFile(join(OUT, page), renderPage(html, { links, assetVersion: (p) => versions.get(p) }));
+  }
+}
+
 /** Extensionless URLs, matching how Pages (and src/server.mts) serve `foo.html` at `/foo`. */
 async function pageUrls(): Promise<string[]> {
   const files = await readdir(OUT);
   return files
-    .filter((f) => f.endsWith('.html'))
+    .filter((f) => f.endsWith('.html') && f !== '404.html') // the 404 page isn't a destination
     .sort()
     .map((f) => (f === 'index.html' ? `${SITE_URL}/` : `${SITE_URL}/${f.slice(0, -'.html'.length)}`));
 }
@@ -39,8 +66,10 @@ async function writeMeta(): Promise<void> {
     '',
   ].join('\n');
 
-  // Cloudflare Pages header rules; ignored by other hosts. Mirrors the server's Cache-Control policy.
-  const headers = ['/assets/*', '  Cache-Control: public, max-age=86400', ''].join('\n');
+  // Cloudflare Pages header rules; ignored by other hosts. Pages can't vary headers by query string, so this
+  // relies on every asset reference in HTML being fingerprinted (renderPages). Files referenced only from CSS
+  // (fonts) aren't, so they must never be edited in place: add a new filename instead.
+  const headers = ['/assets/*', '  Cache-Control: public, max-age=31536000, immutable', ''].join('\n');
 
   await Promise.all([
     writeFile(join(OUT, 'sitemap.xml'), sitemap),
@@ -51,4 +80,5 @@ async function writeMeta(): Promise<void> {
 }
 
 await clean();
+await renderPages();
 await writeMeta();

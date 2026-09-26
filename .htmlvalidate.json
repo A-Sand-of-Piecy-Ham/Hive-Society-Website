@@ -1,0 +1,16 @@
+{
+  "$schema": "https://html-validate.org/schemas/config.json",
+  "extends": [
+    "html-validate:recommended"
+  ],
+  "rules": {
+    "void-style": "off",
+    "heading-level": [
+      "error",
+      {
+        "allowMultipleH1": false,
+        "minInitialRank": "h1"
+      }
+    ]
+  }
+}

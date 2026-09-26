@@ -1,0 +1,37 @@
+# Site settings: values that pages read instead of hard-coding them. See EDITING.md.
+
+calendar:
+  # The public "Hive Shows - Website Calendar" in the Hive Google account. Every calendar link on the
+  # site (Add to Google Calendar, Apple/Outlook subscribe) is built from this ID.
+  # To find it: Google Calendar → the calendar's ⋮ menu → Settings and sharing → Integrate calendar → Calendar ID.
+  # The calendar must stay "Make available to public" or the links stop working.
+  google-calendar-id: d026f222b3206ab09923386feecd631cb16fbf5ad02be29f797cdc2fac6049b4@group.calendar.google.com
+
+mailing-list:
+  # The Google Form that sign-ups go to. The site's sign-up form sends answers to these question IDs.
+  # A daily check compares them with the live form and fails if a question was deleted or re-created.
+  google-form-id: 1FAIpQLSfBh_LjjkSFeL1cqT6uMG71b2_AFSoz2eOouZFQdM2ZV4QbZg
+  questions:
+    name: 1774114897
+    email: 1519864352
+    interests: 1889493696
+
+image-limits:
+  # Limits for every image under public/assets/images, checked by `npm run check:images` in CI.
+  # Each image is limited by the section for its folder; see docs/RUNBOOK.md → Images for
+  # folders, naming rules, and how to resize phone photos (~4000 px, several MB).
+  portraits:   # members/ (member photos, named firstname-lastname.jpg). 1080 px = sharp in the large
+    # half-width card on high-DPI screens; any member can be moved into one, so all portraits get it.
+    max-long-edge-px: 1080
+    max-file-kb: 225
+  team-photos: # teams/ (team photos and logos, named after the team)
+    max-long-edge-px: 1200
+    max-file-kb: 250
+  other:       # everything else
+    max-long-edge-px: 1200
+    max-file-kb: 300
+  # Exceptions: file path (relative to public/assets/images) → why it needs to be bigger. Every exception is downloaded by visitors,
+  # so keep this list short. Entries for files that no longer exist fail the check.
+  exceptions:
+    homepage-group-photo.jpg: Full-width homepage hero; needs 1920 px to stay sharp on large screens
+    social-preview.png: Link-preview image for social media; platforms recommend about 1200 px

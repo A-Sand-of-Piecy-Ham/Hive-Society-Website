@@ -7,6 +7,16 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 
 | Date | Decision | Why |
 |---|---|---|
+| 2026-09-23 | Calendar: source is the revived shows-only **"Hive Shows - Website Calendar"**; page shows a **month grid with an upcoming-shows list under it**; each show shows its Google Calendar **description** and its own **add-to-calendar** link; homepage features the **next show** (falls back to "Come See Us!"). Freshness: up to a week is acceptable, so a **daily scheduled rebuild** is plenty (no visitor-side JavaScript needed). **Build deferred** | User answers to calendar questions; a live API would be overkill for the required freshness |
+| 2026-09-23 | Images are limited per class by folder (`portraits` = `members/` 1080 px / 225 KB, sized for the large card so anyone can be promoted; `team-photos` = `teams/`; `other`), all classes required; portraits and team photos have naming rules. Team names are format-checked only | Every image has a limit; teams rename about yearly, so name ↔ data checks wait for a rename procedure |
+| 2026-09-23 | **Framework: Astro** (approved). Rationale recorded in README → Architecture | Content-heavy site maintained by non-coders: typed content collections, zero-JS default, static-first with optional Node adapter |
+| 2026-09-23 | Roster-removal override = officer-run `workflow_dispatch` ("Approve roster removal") that sets a status on the PR head SHA; officer allowlist in repo variable `ROSTER_OFFICERS`. No labels, tokens, or files | No lasting record of removals beyond git history; approval can't be self-granted by typing text; invalidated by new commits |
+| 2026-09-23 | Mailing-list form drift check: daily scheduled + on PRs touching form settings; not a required check | Catches deleted/re-created Google Form questions without letting a Google outage block merges |
+| 2026-09-25 | Repository is **public** (supersedes the 2026-09-23 "private for now" decision). `main` is the default branch; changes land by squash-merged PR | Owner's choice. Roster history is public, so the roster-privacy rules apply to every commit and PR |
+| 2026-09-23 | Calendar: **build-time render from the public Google Calendar ICS** (approved). Mailing list: **native themed form posting to the existing Google Form** (approved) | Editors keep using Google tools; site gets themed UI |
+| 2026-09-23 | All footers charcoal `#232323` (matching home); was purple on 5 of 7 pages | Consistency; user choice |
+| 2026-09-23 | Caching: content-hash fingerprints on asset URLs at export + immutable `/assets/*`; HTML always revalidates. No "disable cache" switch | Stale assets become impossible rather than bypassable; a page query param can't affect subresource caching anyway |
+| 2026-09-23 | Settings-driven values (calendar ID) live in `content/site.yaml`, referenced from markup via `data-site-link` | No hard-coded IDs/URLs in pages |
 | 2026-09-23 | `main` is branch-protected with required CI checks and squash merges; all changes land via PRs | CMS PRs, CI gating, and PR-title-driven versioning all rely on it |
 | 2026-09-23 | Source images normalized before the first commit: JPEG, ≤1200 px (hero 1920), q82, metadata stripped; opaque PNGs converted to JPEG | Git keeps every blob forever, so the 54 MB originals were kept out of history (now ~7 MB) |
 | 2026-09-23 | `AGENTS.md` is the canonical agent guide and is updated alongside convention changes | Heavy agentic development expected; stale guidance compounds |
@@ -23,16 +33,16 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 ## TODO
 
 ### Decisions needed
-- [ ] GitHub home for this repo (Hive org?). CI, CMS, and GHCR all depend on it.
-- [ ] Rendering engine for templated pages (Astro recommended; see `docs/site-audit.md` §4).
+- [ ] Members data location: `content/members/` now, or wait for the Beeble/`handbook/` decision.
+- [ ] GitHub home for this repo (personal or Hive org). CI, Pages, CMS, and GHCR all depend on it.
 - [ ] Content PR policy: auto-merge on green checks vs require one approval.
+- [ ] **Officers:** should "Hive Society 2025 Official Calendar!" stay public? Audited 2026-09-23: it mixes shows with internal events (meetings, socials at "Hive House", "Survivor Night", a constitution meeting, trips, tentative dates); titles/dates only, no descriptions, attendees, or residential addresses. It's discoverable because Indify's public widget config exposes all three connected calendar IDs plus the account address. Unlisting steps: secret iCal link or Google Group.
 
 ### Theme
-- [ ] Theme build step: `content/theme.yaml` → generated `:root { --group-key: … }` CSS, consumed by templates.
-- [ ] Theme validator (CI): every value is `#rrggbb`/`#rrggbbaa`; keys match the schema; no unknown groups; team `id`s unique and present in team data.
+- [ ] Theme build step: `content/theme.yaml` → generated `:root { --group-key: … }` CSS (`themeToCssVariables` exists; nothing consumes it yet). Lands with Astro.
+- [ ] Theme validator: also check team `id`s exist in team data. **Blocked** on a team-rename procedure (teams rename about every year or semester). *(Format, kebab-case, list shape, and unique ids are done.)*
 - [ ] Contract-break check (CI): fail if a theme key or content field is removed/renamed without a `!` / `BREAKING CHANGE` PR title.
-- [ ] Contrast check (CI): WCAG AA for each text/background pair (e.g. `buttons.text` on `buttons.background`, each `teams.*`).
-- [ ] Fix `links.text` (`#ffa600` on `#ffeb69` fails contrast).
+- [ ] **Decision needed:** new link colors. `links.text` `#ffa600` on `#ffeb69` is 1.62:1 and `links.hover-text` `#996400` is 4.15:1; both need 4.5:1. Waived in `src/contrast.mts` until chosen; remove the waivers when fixed.
 - [ ] In-browser theme editor with live preview and contrast warnings (Tier 2 in the audit).
 
 ### CMS
@@ -40,26 +50,34 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Deploy the OAuth client (Sveltia CMS Authenticator on Cloudflare Workers) and register a GitHub OAuth app.
 - [ ] Enable `publish_mode: editorial_workflow` so edits become PRs that run CI.
 - [ ] Collections: theme, site settings (nav/footer/socials/contact), members, teams, events.
+- [ ] Media folders: member photo uploads go to `public/assets/images/members/` named from the member's name, team photos to `teams/` (so editors can't upload `IMG_1234.jpg`).
+- [ ] Mirror validator rules as field `pattern`s (hex colors, kebab ids, image names) so editors see errors before saving; CI still enforces.
 - [ ] Commit message templates that satisfy the PR-title / Conventional Commits check.
 
 ### CI / testing
-- [ ] GitHub Actions: lint, typecheck, `node:test` unit tests, export build, Docker build.
-- [ ] `kubectl kustomize` + kubeconform on both overlays.
+- [ ] Roster check: a member removed from the active roster must appear in alumni (graduated *or* left); override via the officer-run "Approve roster removal" workflow (see decision). Needs members as data first. Set `ROSTER_OFFICERS` repo variable; consider short Actions log retention.
+- [ ] Member ↔ portrait check: every member entry has a portrait (or an explicit "no photo") and every portrait belongs to a member; member ID = portrait base name. Not for teams until there's a rename procedure (rename photo, theme id, and data together; decide what happens to old names/alumni pages).
 - [ ] Playwright: functional tests across viewports (phone + desktop).
 - [ ] Playwright + axe: accessibility checks per page.
 - [ ] Playwright visual regression with screenshot diffs posted to the PR.
 - [ ] Lighthouse CI budgets (performance, a11y, page weight).
 - [ ] Per-PR preview deploys (Cloudflare Pages branches) linked from the PR.
 - [ ] Plain-language PR summary bot for non-coders.
-- [ ] release-please config: `changelog-sections` making `content`, `theme`, `refactor`, `build`, and `deps` visible (so they cut patch releases); Renovate/Dependabot configured to title PRs `deps:`, PR-title lint restricted to the README type list, release → GHCR tag → prod overlay.
+- [ ] release-please config: `changelog-sections` making `content`, `theme`, `refactor`, `build`, and `deps` visible (so they cut patch releases); release → GHCR tag → prod overlay. *(Dependabot `deps`/`ci` prefixes and PR-title lint are done.)*
 - [ ] CODEOWNERS: `content/**` editors vs `src/**`, `kube/**`, `.github/**` developers.
 
 ### Site
-- [ ] Responsive images at export: AVIF/WebP variants, `srcset`/`sizes`, `loading="lazy"`. Source images are already normalized (~7 MB total).
-- [ ] Extract site settings (`site.yaml`) and move nav/footer into a shared layout.
-- [ ] Members and teams as data; responsive grid layout (see audit §5).
-- [ ] Accessibility fixes: `lang`, `<main>`, heading order, labelled social links, stable anchors.
-- [ ] Replace the Indify calendar and Google Form iframes with native components.
+- [ ] **New members (Fall '26 roster):** photos still missing for Ziv Avros, Greg Kasper, Daniel Nunez, Nat Restrepo, Glen Romanovich, Ray Schomberg; quips still placeholders for 11 (Avros, Bhattacharjee, Deeley, Hamilton, Nunez, Oh, Restrepo, Romanovich, Ruffo, Schomberg, Sims). `grep -n "portrait-placeholder\|ALMOST FUNNY" public/members.html` finds them. Photos marked "I think" by the sender (Quentin, Zay, Atri, Katie Sims) should be confirmed.
+- [ ] **Calendar page (on hold, decided 2026-09-23):** replaces Indify, which is blank today (its `checkedCalendars` is the account's private primary calendar; no events in any month, Sep 2023 → Sep 2026). Build-time from the shows calendar's ICS (parser must handle recurrence + timezones, e.g. `node-ical`). Month grid + upcoming-shows list under it; per show: title, date/time, venue, **description**, **add-to-calendar** link.
+- [ ] **Scheduled rebuilds** (with the calendar page): Pages deploy hook stored as `PAGES_DEPLOY_HOOK` secret; daily GitHub Actions cron POSTs to it (redeploy only if the feed changed).
+- [ ] **Homepage "Next show" (on hold):** next upcoming show from the same data replaces "Come See Us!"; falls back to it when nothing is scheduled.
+- [ ] After the calendar page ships: remove Indify and revoke its access to the Hive Google account. Officers: move upcoming shows into "Hive Shows - Website Calendar".
+- [ ] Mailing list: native themed form → Google Form `formResponse`, entry IDs from `content/site.yaml` (drift check already runs), replacing the iframe.
+- [ ] **Expand the About page.** It's two paragraphs beside a large photo. Ideas: what long-form improv is, how the society works (NewBee → core teams, electives), how auditions work, a short history/lineage timeline (from teams data), FAQ, a video.
+- [ ] Responsive images at export: AVIF/WebP variants, `srcset`/`sizes`, `loading="lazy"`. Sources are already within `image-limits`.
+- [ ] Nav/footer into a shared layout; members and teams as data with a responsive grid (see audit §5). Lands with Astro.
+
+- [ ] **Aux Board section** (decided 2026-09-24: removed from member cards; give it its own section under Alumni, e.g. columns of committees with names, no photos). Roster as of Fall '26: Merch & Design: Katie Johnson, Tess O'Brien, Jonathan Ocampo, Aarush Sinha · AKA Rep: Ari Warner · Diversity Chair: Ari Warner, Neha Samuel · Webmaster: Usman Faridi, Max Wanger, Colin Crook · Historian: Neha Samuel · Alumni Relations Rep: Uma Ramesh, Ari Warner · Big Little: Daniel Shafiabady, Connor Altan · Videography: Ryan Berri, Connor Altan, Daniel Shafiabady, Miette Thompson, Usman Faridi, Katie Johnson, Aarush Sinha · Curtis Orchard Trip: Tess O'Brien · Improv Olympics Coordinators: Ryan Berri, Aarush Sinha.
 
 ### Beeble
 - [ ] Confirm with managers: Beeble as SoT via structured data + monorepo (see decision above).
@@ -72,13 +90,71 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] *If the monorepo is rejected:* transfer `lumirth/beeble` to the Hive org instead (keeps history and redirects), give it its own CMS instance, and have this site fetch its data at build time.
 - [ ] Fix its deploy workflow: installs mdBook via rustup on cache miss; `actions/cache@v3` is deprecated.
 
+### Astro migration (on hold)
+- [ ] Scaffold Astro (TypeScript strict) alongside the current site; port layout (nav/footer) and one page first to validate the approach.
+- [ ] Content collections + schemas: members, teams, events; theme.yaml → CSS custom properties; site.yaml → settings.
+- [ ] Port pages; retire `public/` Mobirise pages, `src/render.mts` fingerprinting, and `overrides.css`.
+- [ ] Keep the Node server path via `@astrojs/node` only if a dynamic feature needs it.
+
+### Existing libraries for things we built (noted 2026-09-24; nothing replaced yet)
+Prefer an existing, maintained package over our own code where it fits. Versions checked on npm 2026-09-24. Many of these come free with Astro, so most swaps should happen *as part of* the migration rather than before it.
+- [ ] `src/theme.mts` (YAML tokens → CSS variables): **Style Dictionary** (`style-dictionary` 5.x, the standard design-token build tool; outputs CSS custom properties) or **Terrazzo** (`@terrazzo/cli`, W3C Design Tokens format). Our semantic-key rules (no palette names, literal hex only) would become a custom validator/format on top; the flattening and CSS output go away.
+- [ ] Settings/theme validation (`parseSite`, `parseImagePolicy`, `validateTheme` shape checks): a schema library, **Zod** (4.x; what Astro content collections use natively) or **Valibot**/**Ajv** (JSON Schema, which also gives editors YAML autocomplete via the YAML language server). Error messages naming the bad key come built in.
+- [x] ~~`src/images.mts` dimension parsing~~ → **image-size** (done 2026-09-24). Resizing/format conversion (planned AVIF/WebP): **sharp**, or Astro's `astro:assets`, which uses it. Folder naming rules: **ls-lint** (`@ls-lint/ls-lint`, a file-name linter configured in `.ls-lint.yml`). Size limits and duplicate detection have no standard tool; keep ours.
+- [ ] `src/app.mts` static server (Pages-style URLs, cache headers, 304s): **wrangler** `pages dev` emulates Cloudflare Pages exactly (including `_headers`); for the container, **sirv** or **serve-static** handle ETag/Last-Modified and clean URLs. Astro's dev server replaces the dev path entirely.
+- [ ] `src/render.mts` asset fingerprinting + `data-site-link` filling: built into Astro/Vite (hashed asset names; settings read in templates). Nothing to adopt before then.
+- [ ] `scripts/export.mts` sitemap: **@astrojs/sitemap** (or `sitemap` without Astro).
+- [ ] `tests/site-links.test.mts` (every link/image exists): **linkinator** (also checks external links) and **html-validate** (HTML correctness, a11y basics). Could complement rather than replace the offline check.
+- [ ] `src/forms.mts` (scraping the Google Form's `FB_PUBLIC_LOAD_DATA_`): the official **Google Forms API** (`googleapis`, `forms.get`) returns question IDs reliably, but needs a service account with access to the form. Scraping needs no credentials; revisit if Google changes the page format.
+- [ ] Calendar links: **calendar-link** generates per-event add-to-calendar links (Google/Outlook/ICS) for the planned calendar page. Subscription links (`calendarLinks`) are simple enough to keep.
+- [ ] Planned work, use a library from the start: ICS parsing → **node-ical**; contrast check → **colorjs.io** (`contrastWCAG21`; `wcag-contrast` is unmaintained since 2022).
+
 ### Housekeeping
-- [ ] On creating the GitHub remote: enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push).
-- [ ] `package.json`: remove the ESLint transitive tree from `dependencies`; drop stale `"main"`.
+- [ ] Bootstrap from npm instead of vendored files (decided 2026-09-24: do it in the Astro migration, which installs it natively; Dependabot then updates it, patch/minor only until visual regression tests exist).
+- [ ] Enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push); free now that the repo is public. See RUNBOOK → setup.
 - [ ] Set the real GHCR owner in `kube/overlays/prod/kustomization.yaml`.
+- [ ] GHCR image visibility: make the package public (repo is public; no cluster credentials needed), or keep it private and add `imagePullSecrets: [{name: ghcr-pull}]` to the prod overlay plus the secret (see docs/CONTAINERIZATION.md).
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-09-25: GitHub remote created (`A-Sand-of-Piecy-Ham/Hive-Society-Website`, public); `main` pushed and made the default branch; this branch merged by squash PR.
+- 2026-09-25: Mailing-list form no longer scrolls inside its frame: frame heights set per breakpoint from the live form's tallest state (submitted empty, with error messages), verified at 24 screen widths from 320 to 1920 px. Frame scrolling kept as a fallback if the form grows; re-measure when `check:form` flags question changes.
+- 2026-09-24: New members' class years filled from the audition sheet's expected graduation semester (Glen: Fall '30); Active Members re-sorted by seniority. Quentin Ruffo's name corrected (sheet spelling; portrait renamed). New quips for Ryan, Kedzie, Greg and Mihika, plus quip updates for Colin, Usman, Aarush and Liam.
+- 2026-09-24: Local server checked against `wrangler pages dev` (Cloudflare's emulator) on 30 URLs; it now also redirects `/index` → `/` and never serves Pages config files (`_redirects`, `_headers`, `_routes.json`, `_worker.js`). Remaining differences are intentional: `/healthz` (Kubernetes probe) and equivalent cache headers (`no-cache` + Last-Modified vs Pages' `max-age=0, must-revalidate` + ETag).
+- 2026-09-24: Executive Board rows evenly spaced (the leftover per-row Mobirise padding removed; only the last row keeps extra space before Active Members). Webmaster rainbow darkened so every color is at least 4.5:1 on the yellow page.
+- 2026-09-24: Local server mirrors Cloudflare Pages: `public/_redirects` (exact paths), clean URLs (`.html`/trailing slash → 308), `public/404.html` for unknown URLs (404 status; excluded from the sitemap). Internal links switched to clean URLs, enforced by the link test. Executive Board ordered by position rank, then seniority. Aux-board notes removed from cards (see TODO). Alumni grid: 5 columns at ≥1400 px (4/2/1 below), spread full width. Webmaster card: rainbow text and click-to-spin portrait (`assets/js/spin-on-click.js`), both off under reduced motion.
+- 2026-09-24: Members page ordered by seniority (graduation year, last name, first name) in every section, enforced by `tests/members-order.test.mts`; Executive Board layout stays by position. 9 new-member portraits added and 4 updated (Lizzy, Neha, Henrikas, Jonathan), cropped square. Alumni grid columns sized to their names and spread evenly (text stays left-aligned). Member-card images always square so placeholder and photo cards line up. Footer icons black on every page (`theme.yaml` `footer.social-icon` → `#000000`).
+- 2026-09-24: Mobirise names removed from the pages: 44 generated `cid-*` section classes merged into 9 readable section classes with `--variant` modifiers (`:where()` keeps specificity identical); `display-N` → `type-*`, `mbr-*` → plain names, builder ids (`menu01-1`, …) and Bootstrap 4 `data-toggle` removed, unstyled classes dropped (`mbr-fonts-style` ×241, …); dead rules pruned. `sections.css` 166 KB → 39 KB. Verified: every element's position and 15 computed styles identical on all pages at 1400/390 px, except footer icons on home/members now purple like every other page (were black; theme says purple). Nav, dropdown, scrolled navbar, footer hover unchanged.
+- 2026-09-24: HTML validation in CI (`npm run lint:html`, html-validate recommended preset + `heading-level`, all errors). Fixed its findings: native `<footer>` landmark, iframe titles (no deprecated `frameborder`), no `<div>` inside `<button>`/`<h1>` or `<p>` inside `<h3>`, broken `aria-labelledby`/`aria-controls` references, inline styles moved to `overrides.css`. Pages renamed `contactus`→`contact-us`, `mailinglist`→`mailing-list`, with 301s in `public/_redirects`.
+- 2026-09-24: `check:images` reads dimensions with `image-size` instead of our PNG/JPEG/GIF header parser; WebP and AVIF are now measurable too.
+- 2026-09-24: Bootstrap 5.0.1 → 5.3.8 (vendored dist files replaced wholesale). Verified on all pages at 1400/390 px: element geometry identical, only invisible inherited colors on navbar wrappers changed; mobile menu and dropdown work; no console errors.
+- 2026-09-24: Contrast check in CI (`src/contrast.mts` via `validate:theme`, `colorjs.io` for WCAG 2.1 math): 23 text/icon-on-background pairs incl. each team and the translucent nav bar; every theme key must be in a pair; known failures (`links.*`) waived with reasons and printed as warnings.
+- 2026-09-24: Homepage hero capped at 65vh with `object-fit: cover` (the top-of-photo crop was done 2026-09-23).
+- 2026-09-24: Accessibility: `<main id="main">` landmark and a "Skip to content" link on every page, footer marked `role="contentinfo"`; one `<h1>` per page with no skipped heading levels (members/teams had 6 and 9 `<h1>`s; calendar, contact, mailing list had none); non-heading subtitles and class years are no longer headings; readable section anchors (`members.html#alumni`, `#executive-board`, `#active-members`, `teams.html#core-teams`, …) replace generated `article11-*` ids. Layout verified element-by-element identical at 1400 and 390 px.
+- 2026-09-24: "Add to Google Calendar" link verified manually (signed in).
+- 2026-09-24: Removed `vendor/smooth-scroll` (Mobirise's bundled wheel-scroll smoother: it replaced native mouse-wheel/keyboard scrolling with scripted animation, which fights OS scroll settings and reduced-motion preferences). Bootstrap's reboot already sets `scroll-behavior: smooth` for in-page links, respecting `prefers-reduced-motion`.
+- 2026-09-24: `public/assets/` reorganized: third-party libraries under `vendor/` (bootstrap, navbar-dropdown, smooth-scroll), site stylesheets under `css/` (`base.css` ← `theme/css/style.css`, `sections.css` ← `mobirise/css/mbr-additional.css`, `overrides.css` ← `site/overrides.css`). No Mobirise-named paths remain.
+- 2026-09-24: Removed unused Mobirise runtime: `mobirise2` icon font (no icons used), `theme/js/script.js` (none of its features' markup present; nav toggle and dropdown verified without it), leftover `data-slide-to` attributes. Socicon font (732 KB for 5 icons) replaced by inline SVGs of the same glyphs (`.social-icon` in `overrides.css`); icon positions verified unchanged within 1 px at desktop and phone widths. ~1 MB less per first page load.
+- 2026-09-24: Roster updated: new Executive Board (co-presidents, VP, secretary, treasurer, membership director), aux-board roles noted on member cards, 15 new members with a shared placeholder photo, 14 former members moved to Alumni. Alumni portraits kept for now (removal planned later). Active members merged into one gallery; 3 empty leftover alumni cards removed.
+- 2026-09-23: Project log cleanup. Resolved: calendar source (shows-only "Hive Shows - Website Calendar", see Decisions) and rendering engine (Astro). Merged duplicate Indify/iframe, image-sizing, and theme-CSS items; mailing-list drift check marked done within its item.
+- 2026-09-23: Member portraits resized to 1080 px (5.4 MB → 4.8 MB, max 199 KB); `image-limits.portraits` tightened to 1080 px / 225 KB. Sized for the large half-width card (~540 CSS px at 2×) so any member can be promoted into one. Homepage hero → `homepage-group-photo.jpg`, About photo → `about-group-spiral-photo.jpg`. Decided: no team-name ↔ team-data check until there's a rename procedure (teams rename ~yearly).
+- 2026-09-23: Team photos/logos moved to `public/assets/images/teams/<team-id>.jpg|png` (9 files, ids match `theme.yaml` teams where present), naming enforced by `check:images`; fixed `alt` text (7 of 9 said "DeMarcus Blackington", one named the wrong team). `image-limits` split into per-class sections (`portraits`, `team-photos`, `other`), all required, unknown sections rejected.
+- 2026-09-23: Member portraits moved to `public/assets/images/members/firstname-lastname.jpg` (41 files), naming enforced by `check:images`. Fixed wrong `alt` text on 38 of 41 portraits (Mobirise copy-paste named the wrong person). `site.yaml` key `images` → `image-limits`.
+- 2026-09-23: Image check in CI (`npm run check:images`, `src/images.mts`): 1200 px / 300 KB limits, exceptions with reasons in `content/site.yaml → images`, duplicate detection, stale-exception detection. Hero and social-preview listed as exceptions.
+- 2026-09-23: RUNBOOK rewritten for a basic-developer audience (what lint/typecheck/tests/export do and why; how the pieces fit; versions & releases with every PR-title type and examples; images; roster changes & override; CI explained). Containers/Kubernetes/GHCR/Tunnel moved to optional `docs/CONTAINERIZATION.md` with rationale. Docs test also enforces PR-title types.
+- 2026-09-23: RUNBOOK §6 "Tests and checks": every test file (what it guarantees, case count), every CI job (runs / when / blocks merging), coverage gaps. Docs test now also requires each test file to be listed.
+- 2026-09-23: RUNBOOK dependency tables (required: Node 24, git; optional by task: Docker, kubectl, k3d, ImageMagick, kustomize, kubeconform, gh). Local k3d flow verified end to end (Traefik ingress at hive.localhost:8081, read-only pod as UID 1000, rollout restart).
+- 2026-09-23: `docs/RUNBOOK.md`: setup, all npm scripts with options, change workflow, deploys (Pages, container, k3d, prod k3s), one-time GitHub/Cloudflare/Google setup, CI-failure guide, maintenance calendar, troubleshooting. `test/docs.test.mts` fails if an npm script is undocumented. README/AGENTS point to it.
+- 2026-09-23: Mailing-list config in `content/site.yaml`; `src/forms.mts` (Google Form structure parser + drift comparison) with tests; `npm run check:form`; `form-drift.yml` workflow. Live form verified: 3 questions, IDs match.
+- 2026-09-23: Calendar audit: public calendars, Indify config exposure, Indify blank due to private primary calendar + free-tier 1-month-back/3-month-ahead window. Unlisting steps given to officers (secret iCal link or Google Group).
+- 2026-09-23: Asset fingerprinting in export + immutable caching; server cache policy (`?v=` immutable, else revalidate with Last-Modified/304); Docker image now serves the exported `dist/` (multi-stage).
+- 2026-09-23: `content/site.yaml` + `data-site-link` rendering; calendar page gets "Add to Google Calendar" / "Apple / Outlook" buttons built from the calendar ID.
+- 2026-09-23: All footers charcoal; `theme.yaml` `footer.background` updated to match.
+- 2026-09-23: `EDITING.md` (non-coder guide). `package.json` cleaned: bogus `dependencies` removed, `yaml` is the only runtime dependency, `private: true`.
+- 2026-09-23: Layout fixes (`public/assets/site/overrides.css`): footer padding (453 → 277 px), sticky footer on short pages, contact page tightened (no scroll at 1920×1080), mailing-list form frame sized to the form (no inner scrollbar). Homepage hero cropped (top 30% ceiling removed; 912 → 645 px tall at full HD).
+- 2026-09-23: CI (`.github/workflows/ci.yml`): lint, typecheck, theme validation, `node:test` suites, static export artifact; Kustomize + kubeconform on every overlay; Docker build + smoke test under pod constraints. PR-title check (`pr-title.yml`); Dependabot (`deps:` / `ci:` prefixes).
+- 2026-09-23: Tests: server routing/traversal/methods, theme rules, local link and asset check across all pages. Server split into `src/app.mts` (testable) + `src/server.mts` (entry).
+- 2026-09-23: Mobirise cleanup on all pages: removed builder badge (1×1 spacer GIF, inline styles, mobiri.se links), generator/IE meta, editor-only attributes, unused YouTube-background script, per-page `?v=` CSS cache-busters and redundant preload. Added `lang="en"`, accessible names on icon links, `rel="noopener"`. Screenshots were pixel-identical before/after apart from the removed 64 px badge strip.
 - 2026-09-23: ESLint 10 flat config + typed linting; `tsconfig.json`.
 - 2026-09-23: Kustomize base + `local` / `prod` overlays.
 - 2026-09-23: Live site mirrored into `public/`; Node static server; `npm run export`.

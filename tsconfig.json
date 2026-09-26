@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "target": "esnext", "module": "nodenext", "strict": true, "noEmit": true,
-    "erasableSyntaxOnly": true, "verbatimModuleSyntax": true, "types": ["node"]
+    "erasableSyntaxOnly": true, "verbatimModuleSyntax": true, "types": ["node"],
+    "allowImportingTsExtensions": true
   },
-  "include": ["src", "scripts", "*.mts"]
+  "include": ["src", "scripts", "tests", "*.mts"]
 }

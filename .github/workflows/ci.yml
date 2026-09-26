@@ -1,0 +1,99 @@
+# Required checks for main. Job `name`s are what branch protection references:
+# keep them stable, or update the ruleset when renaming.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group: # GitHub merge queue, if enabled
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash # explicit shell => `bash -eo pipefail`, so failures inside pipes fail the step
+
+jobs:
+  check:
+    name: Lint, typecheck, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - name: Validate HTML (structure and accessibility)
+        run: npm run lint:html
+      - run: npm run typecheck
+      - name: Validate theme.yaml
+        run: npm run validate:theme
+      - name: Check image sizes
+        run: npm run check:images
+      - run: npm test
+      - name: Static export
+        run: npm run export
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  kube:
+    name: Kubernetes manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      KUBECONFORM_VERSION: v0.8.0
+      KUBECONFORM_SHA256: 9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install kubeconform (checksum-verified)
+        run: |
+          curl -fsSLo kubeconform.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${KUBECONFORM_SHA256}  kubeconform.tar.gz" | sha256sum -c -
+          tar -xzf kubeconform.tar.gz kubeconform
+          sudo install kubeconform /usr/local/bin/
+      - name: Render and validate every overlay
+        run: |
+          for overlay in kube/overlays/*/; do
+            echo "::group::${overlay}"
+            kubectl kustomize "${overlay}" | kubeconform -strict -summary -
+            echo "::endgroup::"
+          done
+
+  image:
+    name: Container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build (not pushed)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          push: false
+          tags: hive-site:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test under the production pod constraints
+        run: |
+          # Same constraints as kube/base/deployment.yaml: numeric non-root UID, read-only root FS.
+          docker run -d --name site --read-only --user 1000 -p 8080:8080 hive-site:ci
+          trap 'docker logs site; docker rm -f site >/dev/null' EXIT
+          for _ in $(seq 1 20); do curl -fs localhost:8080/healthz >/dev/null && break; sleep 0.5; done # quiet while starting
+          for path in /healthz / /members /assets/images/social-preview.png; do
+            curl -fsS -o /dev/null -w "${path} %{http_code}\n" "localhost:8080${path}"
+          done
