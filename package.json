@@ -30,7 +30,7 @@
     "html-validate": "^11.16.0",
     "image-size": "^2.0.4",
     "jiti": "^2.7.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.70.1"
   },
   "license": "ISC"
