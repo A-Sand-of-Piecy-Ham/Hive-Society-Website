@@ -1,0 +1,13 @@
+// Cloudflare Workers deploy config. The site is static: Cloudflare serves dist/ (built by
+// `npm run export`) directly, with no Worker code. Setup and commands: docs/RUNBOOK.md §7.
+{
+  "name": "hive-site",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // /about.html → /about, /about/ → /about: the clean URLs the local server mimics.
+    "html_handling": "auto-trailing-slash",
+    // Unknown URLs get dist/404.html with a 404 status.
+    "not_found_handling": "404-page"
+  }
+}

@@ -25,7 +25,7 @@ Every command, deploy, and setup step is in [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ## How it works
 
-The pages are HTML files in `public/`. Colors and settings (calendar, mailing-list form, image limits) are YAML files in `content/`, checked in CI. `npm start` serves the site locally and behaves like Cloudflare Pages, the live host. `npm run export` builds the static files that get deployed.
+The pages are HTML files in `public/`. Colors and settings (calendar, mailing-list form, image limits) are YAML files in `content/`, checked in CI. `npm start` serves the site locally and behaves like Cloudflare, the live host. `npm run export` builds the static files that get deployed.
 
 The site is moving to [Astro](https://astro.build/) so members, teams, and shows can be edited as data. Why Astro, and how the pieces fit: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 

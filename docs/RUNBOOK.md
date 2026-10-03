@@ -46,7 +46,7 @@ There's no build step for development. The code is TypeScript (`.mts` files), an
 ```
 content/*.yaml ──┐
 public/ (pages) ─┼─► npm start           → local preview, http://localhost:8080
-                 └─► npm run export → dist/ → Cloudflare Pages → hivesocietyimprov.com
+                 └─► npm run export → dist/ → Cloudflare Workers → hivesocietyimprov.com
 ```
 
 - **`public/`**: the site's pages (`*.html`) and `assets/`: `images/`, `css/` (the site's styles; layout fixes go in `css/overrides.css`), and `vendor/` (third-party libraries such as Bootstrap, kept unmodified). (Being replaced by the Astro version; see [ARCHITECTURE.md](ARCHITECTURE.md).)
@@ -55,7 +55,7 @@ public/ (pages) ─┼─► npm start           → local preview, http://local
 - **`src/`**: the small Node server behind `npm start`, and the code that reads the YAML files.
 - **`scripts/`**: the export and the checks that CI runs.
 - **`tests/`**: automated tests ([§10](#10-tests-and-checks)).
-- **GitHub Actions** (CI) runs the checks on every change; **Cloudflare Pages** builds and hosts the live site from GitHub.
+- **GitHub Actions** (CI) runs the checks on every change; **Cloudflare** (Workers static assets) builds and hosts the live site from GitHub.
 
 ## 3. npm scripts
 
@@ -63,9 +63,9 @@ The complete list. A test fails if a script in `package.json` isn't in this tabl
 
 | Command | What it does | When to use it |
 |---|---|---|
-| `npm start` | Runs the site locally at http://localhost:8080. Pages are rebuilt on every request, so edits show on reload. Behaves like Cloudflare Pages: clean URLs (`/about`; `/about.html` redirects there), `public/_redirects` rules, the 404 page for unknown URLs, and never serving Cloudflare's own config files (`_redirects`, `_headers`) | Day-to-day development |
+| `npm start` | Runs the site locally at http://localhost:8080. Pages are rebuilt on every request, so edits show on reload. Behaves like Cloudflare (the live host): clean URLs (`/about`; `/about.html` redirects there), `public/_redirects` rules, the 404 page for unknown URLs, and never serving Cloudflare's own config files (`_redirects`, `_headers`) | Day-to-day development |
 | `npm run start:dist` | Serves the exported `dist/` folder instead, exactly as it will be deployed | Final check before a manual deploy (run `npm run export` first) |
-| `npm run export` | Builds the deployable site into `dist/` (see below) | Before a manual deploy; Cloudflare Pages runs it automatically |
+| `npm run export` | Builds the deployable site into `dist/` (see below) | Before a manual deploy; Cloudflare runs it automatically |
 | `npm test` | Runs the automated tests ([§10](#10-tests-and-checks)) | Before every commit |
 | `npm run lint` | Runs ESLint (see below) | Before every commit |
 | `npm run lint:html` | Checks every page's HTML: valid nesting, headings in order (one `<h1>`, no skipped levels), images have `alt`, iframes have titles, landmarks (see below) | After editing a page |
@@ -197,26 +197,32 @@ Why it's strict: git keeps every version of every file forever, so one 5 MB phot
 
 ## 7. Deploying
 
-### Cloudflare Pages (the live site)
+### Cloudflare Workers (the live site)
 
-Cloudflare Pages **pulls directly from GitHub** through Cloudflare's GitHub app ([setup](#8-one-time-project-setup)):
+The site is hosted as **Workers static assets**: Cloudflare serves the files in `dist/` straight from its network. No server code runs, and requests for static files are free. [`wrangler.jsonc`](../wrangler.jsonc) tells Cloudflare where the files are and how to handle URLs (clean URLs, `404.html`); `_redirects` and `_headers` in `dist/` work as they did on Pages.
 
-- Every merge to `main` builds (`npm run export`) and deploys the live site automatically.
-- Every PR gets its own **preview URL**, updated with each push, so changes can be checked before merging.
+Cloudflare **builds straight from GitHub** (Workers Builds, [setup](#8-one-time-project-setup)):
+
+- Every merge to `main` runs `npm ci && npm run export`, then `npx wrangler deploy`: the live site updates.
+- Every other branch runs `npx wrangler versions upload`, which gives it its own **preview URL** without touching the live site. Check changes there before merging.
+
+The build machine's Node version comes from `.nvmrc`.
 
 Nothing to run by hand. **Manual deploy** (only if the automatic one is broken, or before it's set up):
 
 ```bash
 npm ci && npm run export
 npx wrangler login                     # first time only; opens a browser to log in to Cloudflare
-npx wrangler pages deploy dist --project-name=<pages-project-name> --branch=main
+npx wrangler deploy
 ```
 
 `wrangler` is Cloudflare's command-line tool; `npx` downloads and runs it, so there's nothing to install.
 
+**Check against Cloudflare's own runtime:** `npm run export && npx wrangler dev` serves `dist/` exactly as Cloudflare will, at http://localhost:8787. `npm start` imitates it closely enough for daily work; use this when changing redirects, headers, or URL handling. It leaves a `.wrangler/` folder behind; delete it.
+
 ### Scheduled rebuilds *(planned)*
 
-The calendar page will be built from the shows Google Calendar when the site is exported. To pick up new shows without anyone merging a PR, a **daily GitHub Actions job** will call the Pages project's **deploy hook** (a secret URL that triggers a rebuild). Cloudflare runs the build; GitHub only triggers it.
+The calendar page will be built from the shows Google Calendar when the site is exported. To pick up new shows without anyone merging a PR, a **daily scheduled job** will rebuild and deploy the site (mechanism to be chosen: a GitHub Actions job running the manual deploy above with a Cloudflare API token, or a Cloudflare-side trigger).
 
 ## 8. One-time project setup
 
@@ -234,11 +240,13 @@ Done once when the project is set up or handed to new owners. Tick each off in [
 4. **Log retention:** Settings → Actions → General → artifact and log retention, e.g. 30 days. Roster-override approvals exist only in these logs.
 5. **Dependabot** runs automatically from `.github/dependabot.yml`. Turn on alerts under Settings → Code security.
 
-**Cloudflare Pages**
-1. Cloudflare dashboard → Workers & Pages → Create → Pages → **Connect to Git** → install Cloudflare's GitHub app and grant it this repository → select it.
-2. Build command `npm run export`, build output directory `dist`, environment variable `NODE_VERSION` = `24`.
-3. Custom domains → add `hivesocietyimprov.com` and `www.hivesocietyimprov.com`.
-4. *(For the planned scheduled rebuilds)* Settings → Builds → Deploy hooks → create one for `main`, and store its URL as a GitHub Actions secret.
+**Cloudflare Workers**
+1. Cloudflare dashboard → Workers & Pages → Create → **Import a repository** → install Cloudflare's GitHub app and grant it this repository → select it.
+2. Build command `npm ci && npm run export`; deploy command `npx wrangler deploy`; non-production branch deploy command `npx wrangler versions upload`; production branch `main`; root directory blank. No `NODE_VERSION` needed: `.nvmrc` sets it.
+3. Settings → Domains & Routes → add the custom domain `hivesocietyimprov.com`. Then send `www` to it: Rules → Redirect Rules → template **Redirect from WWW to root**, target `https://hivesocietyimprov.com` (not `www`, or it loops).
+4. **Lock previews to officers:** Settings → Domains & Routes → Preview URLs → **Enable Cloudflare Access**, then allow the officers' emails in the "Cloudflare Workers Preview URLs" policy (Zero Trust → Access → Policies). Choose the **Zero Trust Free** plan: up to 50 people, and over that it refuses new logins instead of billing. Set seat expiration (Zero Trust → Settings → Account) so former officers free their seat.
+5. Analytics & Logs → **Web Analytics** → enable for the domain (free, no cookies).
+6. Once the new project serves the domain, delete the old Pages project.
 
 **Google** (Hive Google account)
 - The **"Hive Shows - Website Calendar"** must stay **public**; its ID is in `content/site.yaml`.
@@ -267,7 +275,7 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 
 | File | What it guarantees |
 |---|---|
-| `tests/app.test.mts` | The local server behaves like Cloudflare Pages: pages load at `/` and without `.html`, `.html`, `/index` and trailing-slash URLs redirect to the clean URL, Cloudflare's config files (`_redirects`, `_headers`) are never served, `_redirects` rules are followed (and unsupported rule syntax is rejected), unknown URLs get the 404 page with a 404 status; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
+| `tests/app.test.mts` | The local server behaves like Cloudflare: pages load at `/` and without `.html`, `.html`, `/index` and trailing-slash URLs redirect to the clean URL, Cloudflare's config files (`_redirects`, `_headers`) are never served, `_redirects` rules are followed (and unsupported rule syntax is rejected), unknown URLs get the 404 page with a 404 status; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
 | `tests/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs, relative or root-absolute (`/assets/…`) |
 | `tests/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
 | `tests/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |

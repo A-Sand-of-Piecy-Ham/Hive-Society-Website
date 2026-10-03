@@ -1,6 +1,6 @@
 /**
  * Static export: builds `dist/` from `public/` for hosts that only serve files
- * (Cloudflare Pages, DO Spaces/App Platform static, any nginx/Caddy).
+ * (Cloudflare, DO Spaces/App Platform static, any nginx/Caddy).
  *
  * Steps: copy public/ → dist/, render every page (named links from content/site.yaml, `?v=<hash>`
  * fingerprints on asset references; see src/render.mts), then write robots.txt / sitemap.xml / _headers.
@@ -66,7 +66,7 @@ async function writeMeta(): Promise<void> {
     '',
   ].join('\n');
 
-  // Cloudflare Pages header rules; ignored by other hosts. Pages can't vary headers by query string, so this
+  // Cloudflare header rules; ignored by other hosts. Cloudflare can't vary headers by query string, so this
   // relies on every asset reference in HTML being fingerprinted (renderPages). Files referenced only from CSS
   // (fonts) aren't, so they must never be edited in place: add a new filename instead.
   const headers = ['/assets/*', '  Cache-Control: public, max-age=31536000, immutable', ''].join('\n');

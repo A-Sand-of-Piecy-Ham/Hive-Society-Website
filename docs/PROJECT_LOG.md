@@ -7,6 +7,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 
 | Date | Decision | Why |
 |---|---|---|
+| 2026-10-03 | **Hosting: Cloudflare Workers static assets** (`wrangler.jsonc`), built from GitHub by Workers Builds, replacing the hand-uploaded Pages project. Node version pinned in `.nvmrc`. Local server redirects clean URLs with 307 to match | Cloudflare's direction for new projects (Astro 6 targets it); static asset requests are free; same `_redirects`/`_headers`/`404.html` behavior, verified with `wrangler dev` |
 | 2026-09-23 | Calendar: source is the revived shows-only **"Hive Shows - Website Calendar"**; page shows a **month grid with an upcoming-shows list under it**; each show shows its Google Calendar **description** and its own **add-to-calendar** link; homepage features the **next show** (falls back to "Come See Us!"). Freshness: up to a week is acceptable, so a **daily scheduled rebuild** is plenty (no visitor-side JavaScript needed). **Build deferred** | User answers to calendar questions; a live API would be overkill for the required freshness |
 | 2026-09-23 | Images are limited per class by folder (`portraits` = `members/` 1080 px / 225 KB, sized for the large card so anyone can be promoted; `team-photos` = `teams/`; `other`), all classes required; portraits and team photos have naming rules. Team names are format-checked only | Every image has a limit; teams rename about yearly, so name ↔ data checks wait for a rename procedure |
 | 2026-09-23 | **Framework: Astro** (approved). Rationale recorded in docs/ARCHITECTURE.md | Content-heavy site maintained by non-coders: typed content collections, zero-JS default, static-first with optional Node adapter |
@@ -61,7 +62,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Playwright + axe: accessibility checks per page.
 - [ ] Playwright visual regression with screenshot diffs posted to the PR.
 - [ ] Lighthouse CI budgets (performance, a11y, page weight).
-- [ ] Per-PR preview deploys (Cloudflare Pages branches) linked from the PR.
+- [ ] Per-PR preview deploys linked from the PR (Workers Builds gives each branch a preview URL once the project is set up).
 - [ ] Plain-language PR summary bot for non-coders.
 - [ ] release-please config: `changelog-sections` making `content`, `theme`, `refactor`, `build`, and `deps` visible (so they cut patch releases); release → GHCR tag → prod overlay. *(Dependabot `deps`/`ci` prefixes and PR-title lint are done.)*
 - [ ] CODEOWNERS: `content/**` editors vs `src/**`, `kube/**`, `.github/**` developers.
@@ -110,6 +111,9 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Planned work, use a library from the start: ICS parsing → **node-ical**; contrast check → **colorjs.io** (`contrastWCAG21`; `wcag-contrast` is unmaintained since 2022).
 
 ### Housekeeping
+- [ ] **Cloudflare cutover** (RUNBOOK §8): create the Workers project from the repo, check its preview, move `hivesocietyimprov.com` to it, delete the old Pages project.
+- [ ] Fix `www.hivesocietyimprov.com`: its redirect rule points at `www` itself and loops (seen 2026-10-03); target the bare domain.
+- [ ] Lock Workers preview URLs with Cloudflare Access (officers only, Zero Trust Free); turn on Web Analytics.
 - [ ] Bootstrap from npm instead of vendored files (decided 2026-09-24: do it in the Astro migration, which installs it natively; Dependabot then updates it, patch/minor only until visual regression tests exist).
 - [ ] Enable branch protection / ruleset on `main` (required checks, PR required, squash-only, no force-push); free now that the repo is public. See RUNBOOK → setup.
 - [ ] Set the real GHCR owner in `kube/overlays/prod/kustomization.yaml`.
