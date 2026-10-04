@@ -22,6 +22,25 @@ describe('renderPage: named links', () => {
   });
 });
 
+describe('renderPage: canonical URL', () => {
+  const page = '<html><head><title>x</title></head><body></body></html>';
+
+  it('adds the canonical link before </head>, escaped', () => {
+    const out = renderPage(page, { links, canonicalUrl: 'https://example.com/a?b=1&c=2' });
+    assert.match(out, /<link rel="canonical" href="https:\/\/example\.com\/a\?b=1&amp;c=2">\n<\/head>/);
+  });
+
+  it('adds nothing without a canonicalUrl (live server, 404 page)', () => {
+    assert.equal(renderPage(page, { links }), page);
+  });
+
+  it('refuses a page that already has one, or has no </head>', () => {
+    const tagged = page.replace('</head>', '<link rel="canonical" href="https://x.test/"></head>');
+    assert.throws(() => renderPage(tagged, { links, canonicalUrl: 'https://example.com/' }), /already has a canonical/);
+    assert.throws(() => renderPage('<p>no head</p>', { links, canonicalUrl: 'https://example.com/' }), /no <\/head>/);
+  });
+});
+
 describe('renderPage: asset fingerprints', () => {
   const assetVersion = (p: string): string | undefined => (p === 'assets/a.css' ? 'v1' : undefined);
 

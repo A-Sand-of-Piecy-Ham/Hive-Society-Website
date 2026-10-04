@@ -6,6 +6,8 @@
  * 2. Asset fingerprints (export only): local `assets/…` references get `?v=<content hash>`. A changed file
  *    gets a new URL, so browsers fetch it immediately; unchanged files can be cached for a year. This is
  *    what makes a "disable caching" switch unnecessary.
+ * 3. Canonical URL (export only): `<link rel="canonical">` naming the page's one real address, so search
+ *    engines fold workers.dev, preview, and `?utm_…` copies into it.
  *
  * Interim: a template engine (see docs/PROJECT_LOG.md) replaces this when pages become templates.
  */
@@ -15,6 +17,8 @@ export interface RenderContext {
   links: Readonly<Record<string, string>>;
   /** Returns a version token for a site-root-relative asset path (e.g. `assets/x.css`), or undefined to leave it. */
   assetVersion?: (assetPath: string) => string | undefined;
+  /** Absolute URL to declare as the page's canonical address; omitted for the live server and the 404 page. */
+  canonicalUrl?: string;
 }
 
 const TAG_WITH_SITE_LINK = /<a\b[^>]*\bdata-site-link="([^"]+)"[^>]*>/g;
@@ -39,6 +43,12 @@ export function renderPage(html: string, ctx: RenderContext): string {
       const version = assetVersion(path);
       return version ? `${attr}="${slash}${path}?v=${version}${hash ?? ''}"` : whole;
     });
+  }
+  if (ctx.canonicalUrl !== undefined) {
+    // One source of truth: a hand-written tag would drift from the export's URLs, so it's an error.
+    if (/<link\b[^>]*\brel="canonical"/.test(out)) throw new Error('Page already has a canonical link; the export adds it');
+    if (!out.includes('</head>')) throw new Error('Page has no </head> to add a canonical link to');
+    out = out.replace('</head>', `  <link rel="canonical" href="${escapeAttr(ctx.canonicalUrl)}">\n</head>`);
   }
   return out;
 }

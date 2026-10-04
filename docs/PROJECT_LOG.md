@@ -121,6 +121,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-10-03: Export adds `<link rel="canonical">` to every page but the 404 (bare domain, clean URL), so workers.dev, preview, and tracking-parameter copies fold into one URL in search.
 - 2026-09-26: Docs split by reader: README is a front page (quick start first, contents, an explained doc index, a short Planned section); rationale moved to new `docs/ARCHITECTURE.md` (stack today vs planned, why Astro, theme rules, caching); versioning detail lives only in RUNBOOK §5; EDITING.md drops the not-yet-built officer override steps.
 - 2026-09-25: GitHub remote created (`A-Sand-of-Piecy-Ham/Hive-Society-Website`, public); `main` pushed and made the default branch; this branch merged by squash PR.
 - 2026-09-25: Mailing-list form no longer scrolls inside its frame: frame heights set per breakpoint from the live form's tallest state (submitted empty, with error messages), verified at 24 screen widths from 320 to 1920 px. Frame scrolling kept as a fallback if the form grows; re-measure when `check:form` flags question changes.

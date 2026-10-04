@@ -55,7 +55,7 @@ src/site.mts           site.yaml loading/validation; named links (calendar-googl
 src/contrast.mts       WCAG contrast pairs + waivers for theme.yaml (run by validate:theme)
 src/images.mts         image policy (site.yaml → image-limits): per-class limits, exceptions, duplicates, folder naming rules
 src/forms.mts          Google Form structure parser + drift comparison
-src/render.mts         shared HTML transform (server + export): fills data-site-link hrefs; export adds ?v=<hash>
+src/render.mts         shared HTML transform (server + export): fills data-site-link hrefs; export adds ?v=<hash> and <link rel="canonical"> (never hand-write one)
 scripts/export.mts     public/ → dist/ + robots.txt, sitemap.xml, _headers
 wrangler.jsonc         Cloudflare deploy config: Workers static assets serving dist/ (no Worker code)
 .nvmrc                 Node version for local nvm and Cloudflare's build machine

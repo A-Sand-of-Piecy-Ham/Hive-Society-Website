@@ -43,17 +43,22 @@ async function renderPages(): Promise<void> {
     const html = await readFile(join(OUT, page), 'utf8');
     // Resolve every referenced asset's version up front; renderPage itself is synchronous.
     for (const [, path = ''] of html.matchAll(/\b(?:href|src)="\/?(assets\/[^"?#]+)/g)) await versionOf(path);
-    await writeFile(join(OUT, page), renderPage(html, { links, assetVersion: (p) => versions.get(p) }));
+    const canonicalUrl = page === NOT_FOUND_PAGE ? undefined : pageUrl(page);
+    await writeFile(join(OUT, page), renderPage(html, { links, assetVersion: (p) => versions.get(p), canonicalUrl }));
   }
 }
 
-/** Extensionless URLs, matching how Pages (and src/server.mts) serve `foo.html` at `/foo`. */
+/** The 404 page isn't a destination: no canonical URL, not in the sitemap. */
+const NOT_FOUND_PAGE = '404.html';
+
+/** Extensionless URL, matching how Cloudflare (and src/server.mts) serve `foo.html` at `/foo`. */
+function pageUrl(file: string): string {
+  return file === 'index.html' ? `${SITE_URL}/` : `${SITE_URL}/${file.slice(0, -'.html'.length)}`;
+}
+
 async function pageUrls(): Promise<string[]> {
   const files = await readdir(OUT);
-  return files
-    .filter((f) => f.endsWith('.html') && f !== '404.html') // the 404 page isn't a destination
-    .sort()
-    .map((f) => (f === 'index.html' ? `${SITE_URL}/` : `${SITE_URL}/${f.slice(0, -'.html'.length)}`));
+  return files.filter((f) => f.endsWith('.html') && f !== NOT_FOUND_PAGE).sort().map(pageUrl);
 }
 
 async function writeMeta(): Promise<void> {
