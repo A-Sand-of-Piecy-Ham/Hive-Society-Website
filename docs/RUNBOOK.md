@@ -203,7 +203,7 @@ The site is hosted as **Workers static assets**: Cloudflare serves the files in 
 
 Cloudflare **builds straight from GitHub** (Workers Builds, [setup](#8-one-time-project-setup)):
 
-- Every merge to `main` runs `npm ci && npm run export`, then `npx wrangler deploy`: the live site updates.
+- Every merge to `main` installs dependencies, then runs `npx wrangler deploy`: wrangler builds `dist/` itself (`npm run export`, the `build` command in `wrangler.jsonc`) and the live site updates.
 - Every other branch runs `npx wrangler preview` (Cloudflare's Worker Previews, in open beta), which gives it its own **preview URL** without touching the live site. Check changes there before merging. Preview links ask officers to log in (Cloudflare Access), since they show unmerged changes.
 
 The build machine's Node version comes from `.nvmrc`.
@@ -218,7 +218,7 @@ npx wrangler deploy
 
 `wrangler` is Cloudflare's command-line tool; `npx` downloads and runs it, so there's nothing to install.
 
-**Check against Cloudflare's own runtime:** `npm run export && npx wrangler dev` serves `dist/` exactly as Cloudflare will, at http://localhost:8787. `npm start` imitates it closely enough for daily work; use this when changing redirects, headers, or URL handling. It leaves a `.wrangler/` folder behind; delete it.
+**Check against Cloudflare's own runtime:** `npx wrangler dev` (it runs the export first) serves `dist/` exactly as Cloudflare will, at http://localhost:8787. `npm start` imitates it closely enough for daily work; use this when changing redirects, headers, or URL handling. It leaves a `.wrangler/` folder behind; delete it.
 
 ### Scheduled rebuilds *(planned)*
 
@@ -242,7 +242,7 @@ Done once when the project is set up or handed to new owners. Tick each off in [
 
 **Cloudflare Workers**
 1. Cloudflare dashboard → Workers & Pages → Create → **Import a repository** → install Cloudflare's GitHub app and grant it this repository → select it.
-2. Build command `npm ci && npm run export`; deploy command `npx wrangler deploy`; non-production branch deploy command `npx wrangler preview` (the default; it needs the `previews` block in `wrangler.jsonc`. If the beta misbehaves, `npx wrangler versions upload` also works); production branch `main`; root directory blank. No `NODE_VERSION` needed: `.nvmrc` sets it.
+2. Build command `npm ci && npm run export` (the export also runs from `wrangler.jsonc`, so a missing or ignored build command can't ship an empty site); deploy command `npx wrangler deploy`; non-production branch deploy command `npx wrangler preview` (the default; it needs the `previews` block in `wrangler.jsonc`. If the beta misbehaves, `npx wrangler versions upload` also works); production branch `main`; root directory blank. No `NODE_VERSION` needed: `.nvmrc` sets it.
 3. Settings → Domains & Routes → add the custom domain `hivesocietyimprov.com`. Then send `www` to it: Rules → Redirect Rules → template **Redirect from WWW to root**, target `https://hivesocietyimprov.com` (not `www`, or it loops).
 4. **Lock previews to officers.** Preview links show unmerged changes, so only officers should see them. `wrangler.jsonc` already turns previews on and the public `workers.dev` address off; the login is set up here:
    - Turn on Zero Trust if it isn't yet, choosing the **Free** plan: up to 50 people, and over that it refuses new logins instead of billing. Cloudflare may ask for a card; check Manage Account → Billing afterwards shows Zero Trust Free at $0.
