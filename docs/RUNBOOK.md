@@ -276,7 +276,8 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 | File | What it guarantees |
 |---|---|
 | `tests/app.test.mts` | The local server behaves like Cloudflare: pages load at `/` and without `.html`, `.html`, `/index` and trailing-slash URLs redirect to the clean URL, Cloudflare's config files (`_redirects`, `_headers`) are never served, `_redirects` rules are followed (and unsupported rule syntax is rejected), unknown URLs get the 404 page with a 404 status; caching behaves (unchanged files answer "not modified", versioned files are cached long-term); links from `site.yaml` are filled in; the health-check URL works; attempts to read files outside the site (path traversal) are refused; only GET/HEAD requests are allowed |
-| `tests/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs, relative or root-absolute (`/assets/…`); adding the canonical link (escaped, refused if a page already has one) |
+| `tests/render.test.mts` | Filling in named links (escaped safely; unknown names stop the build instead of leaving a dead link) and adding version codes to stylesheet/image URLs, relative or root-absolute (`/assets/…`); adding the canonical link and `og:` link-preview tags from the page's own title and description (escaped once; refused if a page already has them) |
+| `tests/seo.test.mts` | Runs the real export and checks what search engines and link previews see: every page has one unique title (10-60 characters) and one unique description (50-160), a canonical link and `og:url` naming its clean URL on the bare domain, `og:title`/`og:description` matching the page, an absolute `og:image`, a language, and no `noindex`; the sitemap lists exactly the pages; `robots.txt` allows crawling and names the sitemap. Failing on a description? Rewrite it so it's unique and the right length |
 | `tests/site.test.mts` | `content/site.yaml` loads; mistakes are reported with the exact setting named; the "Add to Google Calendar" and Apple/Outlook links are built correctly |
 | `tests/forms.test.mts` | Reading a Google Form's questions, and detecting when a question was deleted/re-created or a new required one added. Uses a built-in sample, not the live form |
 | `tests/contrast.test.mts` | Contrast math (WCAG 2.1 ratios, 4.5:1 text, 3:1 large text and icons, see-through backgrounds), that every theme color is in a checked pair, and that the site's colors pass except for listed waivers (and no waiver is left over once fixed) |
@@ -304,7 +305,7 @@ Written with Node's built-in test runner (`node:test`, no extra framework). All 
 
 ### Not covered yet
 
-Planned ([PROJECT_LOG.md](PROJECT_LOG.md)): browser tests on phone and desktop sizes (Playwright), accessibility checks (axe), screenshot comparison, performance budgets (Lighthouse), a color-contrast check, and the roster check. Nothing tests the exported `dist/` folder directly yet.
+Planned ([PROJECT_LOG.md](PROJECT_LOG.md)): browser tests on phone and desktop sizes (Playwright), accessibility checks (axe), screenshot comparison, performance and SEO scores (Lighthouse, with the Astro migration), a color-contrast check, and the roster check. Nothing tests the exported `dist/` folder directly yet.
 
 Checked by hand only: the "Add to Google Calendar" button (needs a signed-in Google account).
 

@@ -5,7 +5,7 @@
  * Steps: copy public/ → dist/, render every page (named links from content/site.yaml, `?v=<hash>`
  * fingerprints on asset references; see src/render.mts), then write robots.txt / sitemap.xml / _headers.
  *
- * Usage: node scripts/export.mts   (SITE_URL=https://example.com to override the canonical origin)
+ * Usage: node scripts/export.mts   (SITE_URL=https://example.com overrides the canonical origin; OUT_DIR, the output folder)
  */
 import { createHash } from 'node:crypto';
 import { cp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -14,7 +14,7 @@ import { renderPage } from '../src/render.mts';
 import { loadSite, siteLinks } from '../src/site.mts';
 
 const SRC = resolve('public');
-const OUT = resolve('dist');
+const OUT = resolve(process.env.OUT_DIR ?? 'dist');
 const SITE_URL = (process.env.SITE_URL ?? 'https://hivesocietyimprov.com').replace(/\/$/, '');
 
 async function clean(): Promise<void> {

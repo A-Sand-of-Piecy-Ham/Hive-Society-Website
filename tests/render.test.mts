@@ -22,21 +22,29 @@ describe('renderPage: named links', () => {
   });
 });
 
-describe('renderPage: canonical URL', () => {
-  const page = '<html><head><title>x</title></head><body></body></html>';
+describe('renderPage: canonical URL and link previews', () => {
+  const page = '<html><head><title>Hive &amp; "Co"</title><meta name="description" content="Shows &amp; more"></head><body></body></html>';
 
-  it('adds the canonical link before </head>, escaped', () => {
+  it('adds the canonical link and og: tags before </head>, escaped once', () => {
     const out = renderPage(page, { links, canonicalUrl: 'https://example.com/a?b=1&c=2' });
-    assert.match(out, /<link rel="canonical" href="https:\/\/example\.com\/a\?b=1&amp;c=2">\n<\/head>/);
+    assert.match(out, /<link rel="canonical" href="https:\/\/example\.com\/a\?b=1&amp;c=2">/);
+    assert.match(out, /<meta property="og:title" content="Hive &amp; &quot;Co&quot;">/);
+    assert.match(out, /<meta property="og:description" content="Shows &amp; more">/);
+    assert.match(out, /<meta property="og:url" content="https:\/\/example\.com\/a\?b=1&amp;c=2">\n<\/head>/);
+  });
+
+  it('refuses a page without a title or description to build the preview from', () => {
+    assert.throws(() => renderPage('<head><title>x</title></head>', { links, canonicalUrl: 'https://example.com/' }), /needs a <title> and a meta description/);
   });
 
   it('adds nothing without a canonicalUrl (live server, 404 page)', () => {
     assert.equal(renderPage(page, { links }), page);
   });
 
-  it('refuses a page that already has one, or has no </head>', () => {
-    const tagged = page.replace('</head>', '<link rel="canonical" href="https://x.test/"></head>');
-    assert.throws(() => renderPage(tagged, { links, canonicalUrl: 'https://example.com/' }), /already has a canonical/);
+  it('refuses hand-written copies of the generated tags, or a page with no </head>', () => {
+    for (const tag of ['<link rel="canonical" href="https://x.test/">', '<meta property="og:title" content="x">']) {
+      assert.throws(() => renderPage(page.replace('</head>', `${tag}</head>`), { links, canonicalUrl: 'https://example.com/' }), /already has a canonical/);
+    }
     assert.throws(() => renderPage('<p>no head</p>', { links, canonicalUrl: 'https://example.com/' }), /no <\/head>/);
   });
 });

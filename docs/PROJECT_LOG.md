@@ -68,9 +68,10 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] CODEOWNERS: `content/**` editors vs `src/**`, `kube/**`, `.github/**` developers.
 
 ### Site
+- [ ] **Review the page descriptions by hand** (drafted 2026-10-03, the text under each page's link in search results and link previews): check facts and voice in each page's `<meta name="description">`. `tests/seo.test.mts` enforces only uniqueness and length.
 - [ ] **New members (Fall '26 roster):** photos still missing for Ziv Avros, Greg Kasper, Daniel Nunez, Nat Restrepo, Glen Romanovich, Ray Schomberg; quips still placeholders for 11 (Avros, Bhattacharjee, Deeley, Hamilton, Nunez, Oh, Restrepo, Romanovich, Ruffo, Schomberg, Sims). `grep -n "portrait-placeholder\|ALMOST FUNNY" public/members.html` finds them. Photos marked "I think" by the sender (Quentin, Zay, Atri, Katie Sims) should be confirmed.
 - [ ] **Calendar page (on hold, decided 2026-09-23):** replaces Indify, which is blank today (its `checkedCalendars` is the account's private primary calendar; no events in any month, Sep 2023 → Sep 2026). Build-time from the shows calendar's ICS (parser must handle recurrence + timezones, e.g. `node-ical`). Month grid + upcoming-shows list under it; per show: title, date/time, venue, **description**, **add-to-calendar** link.
-- [ ] **Scheduled rebuilds** (with the calendar page): Pages deploy hook stored as `PAGES_DEPLOY_HOOK` secret; daily GitHub Actions cron POSTs to it (redeploy only if the feed changed).
+- [ ] **Scheduled rebuilds** (with the calendar page): daily rebuild + deploy (GitHub Actions cron running `wrangler deploy` with a Cloudflare API token secret, or a Cloudflare-side trigger); redeploy only if the feed changed.
 - [ ] **Homepage "Next show" (on hold):** next upcoming show from the same data replaces "Come See Us!"; falls back to it when nothing is scheduled.
 - [ ] After the calendar page ships: remove Indify and revoke its access to the Hive Google account. Officers: move upcoming shows into "Hive Shows - Website Calendar".
 - [ ] Mailing list: native themed form → Google Form `formResponse`, entry IDs from `content/site.yaml` (drift check already runs), replacing the iframe.
@@ -96,6 +97,7 @@ When a decision changes conventions, commands, or layout, update [AGENTS.md](../
 - [ ] Content collections + schemas: members, teams, events; theme.yaml → CSS custom properties; site.yaml → settings.
 - [ ] Port pages; retire `public/` Mobirise pages, `src/render.mts` fingerprinting, and `overrides.css`.
 - [ ] Keep the Node server path via `@astrojs/node` only if a dynamic feature needs it.
+- [ ] Add **Lighthouse CI** (`@lhci/cli`) with the migration: SEO, accessibility, and performance score thresholds on the built pages. Deferred until then because the page structure is being rebuilt anyway; `tests/seo.test.mts` covers the SEO basics meanwhile.
 
 ### Existing libraries for things we built (noted 2026-09-24; nothing replaced yet)
 Prefer an existing, maintained package over our own code where it fits. Versions checked on npm 2026-09-24. Many of these come free with Astro, so most swaps should happen *as part of* the migration rather than before it.
@@ -121,6 +123,7 @@ Prefer an existing, maintained package over our own code where it fits. Versions
 - [ ] Create the Cloudflare Tunnel and the `cloudflared-token` Secret.
 
 ## Done
+- 2026-10-03: SEO checks in CI (`tests/seo.test.mts`, on the real export): unique titles and descriptions of sane length, canonical + `og:` tags, sitemap, robots.txt. Export now generates `og:title`/`og:description`/`og:url`; hand-written `twitter:title`/`twitter:image:src` removed (X falls back to `og:`). Unique descriptions drafted for all 7 pages (review TODO under Site).
 - 2026-10-03: Export adds `<link rel="canonical">` to every page but the 404 (bare domain, clean URL), so workers.dev, preview, and tracking-parameter copies fold into one URL in search.
 - 2026-09-26: Docs split by reader: README is a front page (quick start first, contents, an explained doc index, a short Planned section); rationale moved to new `docs/ARCHITECTURE.md` (stack today vs planned, why Astro, theme rules, caching); versioning detail lives only in RUNBOOK §5; EDITING.md drops the not-yet-built officer override steps.
 - 2026-09-25: GitHub remote created (`A-Sand-of-Piecy-Ham/Hive-Society-Website`, public); `main` pushed and made the default branch; this branch merged by squash PR.
