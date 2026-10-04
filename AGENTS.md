@@ -13,7 +13,7 @@ Guidance for AI coding agents working in this repo. Humans: see [README.md](READ
 
 ## Project
 
-Website for Hive Society Improv (UIUC), https://hivesocietyimprov.com. Today it's the original Mobirise export in `public/`, served by a Node static server or exported to static files. **Decided: migrating to Astro** (content collections for members/teams/events, static output, islands for interactivity; see README → Architecture). Until the migration lands, keep changes to `public/` minimal; new page features belong in the Astro version. Read `docs/PROJECT_LOG.md` for current decisions and open work, and `docs/site-audit.md` for the content inventory and plans.
+Website for Hive Society Improv (UIUC), https://hivesocietyimprov.com. Today it's the original Mobirise site in `public/` (cleaned up), served by a Node static server or exported to static files. **Decided: migrating to Astro** (content collections for members/teams/events, static output, islands for interactivity; see `docs/ARCHITECTURE.md`). Until the migration lands, keep changes to `public/` minimal; new page features belong in the Astro version. Read `docs/PROJECT_LOG.md` for current decisions and open work, and `docs/site-audit.md` for the content inventory and plans.
 
 ## Commands
 
@@ -61,7 +61,7 @@ scripts/validate-theme.mts   CLI used by CI
 tests/*.test.mts       node:test suites (server, theme, local link/asset check)
 .github/               ci.yml (required checks), pr-title.yml, dependabot.yml
 kube/base, kube/overlays/{local,prod}   Kustomize; prod = k3s + Cloudflare Tunnel
-docs/                  RUNBOOK.md (commands/procedures), PROJECT_LOG.md (decisions + TODOs), site-audit.md
+docs/                  RUNBOOK.md (commands/procedures), ARCHITECTURE.md (stack, rationale, theme rules, caching), PROJECT_LOG.md (decisions + TODOs), site-audit.md
 ```
 
 ## Conventions
@@ -98,7 +98,7 @@ docs/                  RUNBOOK.md (commands/procedures), PROJECT_LOG.md (decisio
 ### Commits, PRs, and versioning
 `main` is branch-protected: **all changes go through a PR on a branch**, required CI checks must pass before merge, and PRs are squash-merged. Never commit or push to `main` directly, and never bypass or weaken protection or required checks to get a change in. If a check is wrong, fix the check in its own PR.
 
-Conventional Commits; the PR title becomes the squash commit message and is checked by `.github/workflows/pr-title.yml`. If you change the allowed types, update that file, this table, and README → Versioning together. The version is bumped automatically. **Never edit `version` in `package.json` by hand.**
+Conventional Commits; the PR title becomes the squash commit message and is checked by `.github/workflows/pr-title.yml`. If you change the allowed types, update that file, this table, and RUNBOOK §5 together. The version is bumped automatically. **Never edit `version` in `package.json` by hand.**
 
 | Type | Use for | Release |
 |---|---|---|
@@ -112,7 +112,7 @@ Conventional Commits; the PR title becomes the squash commit message and is chec
 | `<type>!:` or `BREAKING CHANGE:` footer | Removed/renamed theme key or content field, changed URLs, change needing manual deploy steps (new secret, cluster, site engine) | major |
 | `test:` `ci:` `docs:` `style:` (formatting only) `chore:` | No runtime regression risk | none |
 
-Rule of thumb: bump by **regression risk**. If the change could alter the deployed site's behavior or appearance (code logic, image, dependencies, content), it gets at least a patch. Formatting-only and test-only changes touch code but carry no runtime risk, so they don't release. "Architecture change" is **not** automatically major. What matters is whether a contract breaks (content/theme schema, URLs, deploy steps). Full rationale is in README → Versioning.
+Rule of thumb: bump by **regression risk**. If the change could alter the deployed site's behavior or appearance (code logic, image, dependencies, content), it gets at least a patch. Formatting-only and test-only changes touch code but carry no runtime risk, so they don't release. "Architecture change" is **not** automatically major. What matters is whether a contract breaks (content/theme schema, URLs, deploy steps). Full rationale is in RUNBOOK §5.
 
 ### Infrastructure
 - Kustomize: environment differences go in overlays, never forked copies of base files. Use standard `networking.k8s.io/v1` Ingress, not Traefik CRDs, to stay portable.
