@@ -11,7 +11,7 @@ How the site is built and why. For contributors. Commands and procedures are in 
 | Pages | Hand-maintained HTML in `public/` (the original Mobirise site, cleaned up) | **[Astro](https://astro.build/)**, with pages and members generated from data |
 | Language / runtime | TypeScript on Node 24 (native type stripping, no build step for tooling) | Same |
 | Content | Settings and colors in YAML (`content/`), validated in CI | Members, teams, and events as schema-validated YAML/Markdown, edited through **[Sveltia CMS](https://github.com/sveltia/sveltia-cms)** |
-| Hosting | Static export on **Cloudflare Pages**; the local server mimics Pages | Same; optional **Kubernetes** path (k3s + Kustomize + Cloudflare Tunnel), see [CONTAINERIZATION.md](CONTAINERIZATION.md) |
+| Hosting | Static export on **Cloudflare Workers** (static assets, no Worker code; `wrangler.jsonc`); the local server mimics it | Same; optional **Kubernetes** path (k3s + Kustomize + Cloudflare Tunnel), see [CONTAINERIZATION.md](CONTAINERIZATION.md) |
 | CI | GitHub Actions: lint, HTML validation, typecheck, tests, manifest validation, container smoke test, PR-title check, form drift check | Release automation from Conventional Commits (release-please) |
 
 ## Why Astro
@@ -20,7 +20,7 @@ The site is mostly content: shows, members, teams, and the society's history. It
 
 - **Content collections with schemas.** Members, teams, and events become typed, validated data. A typo from the CMS fails the build with a readable error instead of breaking a page in production.
 - **Zero JavaScript by default, interactivity where it matters.** Pages ship as static HTML. Interactive pieces are isolated "islands", which keeps pages fast on phones.
-- **Static-first, server-optional.** The default output deploys directly to Cloudflare Pages. An adapter can serve individual pages on demand if a dynamic feature is ever needed.
+- **Static-first, server-optional.** The default output deploys directly to Cloudflare. An adapter can serve individual pages on demand if a dynamic feature is ever needed.
 - **Built-in asset pipeline.** Image resizing, modern formats, and content-hashed filenames replace this project's custom fingerprinting and manual image optimization.
 
 **Next.js** was the main alternative. Its strengths (per-request rendering, auth, app-style interactivity) aren't requirements here, its static export gives up most of them, and it would ship a React runtime to every visitor of an otherwise static site. **Eleventy** fit the static side but offered no typed content schema or component islands.
