@@ -1,9 +1,9 @@
 // Cloudflare Workers deploy config. The site is static: Cloudflare serves dist/ (built by
 // `npm run export`) directly, with no Worker code. Setup and commands: docs/RUNBOOK.md §7.
 {
-  "name": "hive-site",
+  "name": "hive-society-website",
   "compatibility_date": "2026-10-01",
-  // The live site exists only at hivesocietyimprov.com: no public copy at hive-site.<account>.workers.dev.
+  // The live site exists only at hivesocietyimprov.com: no public copy at hive-society-website.<account>.workers.dev.
   "workers_dev": false,
   // Every branch gets a preview link (wrangler leaves these off unless asked). Cloudflare Access limits
   // them to officers; see docs/RUNBOOK.md §8.
