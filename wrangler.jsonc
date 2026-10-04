@@ -5,8 +5,11 @@
   "compatibility_date": "2026-10-01",
   // The live site exists only at hivesocietyimprov.com: no public copy at hive-society-website.<account>.workers.dev.
   "workers_dev": false,
-  // Every branch gets a preview link (wrangler leaves these off unless asked). Cloudflare Access limits
-  // them to officers; see docs/RUNBOOK.md §8.
+  // PR builds run `npx wrangler preview` (Worker Previews, open beta), which needs this block. Empty: a
+  // static site has no bindings or variables for previews to override.
+  "previews": {},
+  // Fallback preview links for `npx wrangler versions upload` (wrangler leaves them off unless asked).
+  // Both kinds are limited to officers by Cloudflare Access; see docs/RUNBOOK.md §8.
   "preview_urls": true,
   "assets": {
     "directory": "./dist",

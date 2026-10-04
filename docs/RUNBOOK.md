@@ -204,7 +204,7 @@ The site is hosted as **Workers static assets**: Cloudflare serves the files in 
 Cloudflare **builds straight from GitHub** (Workers Builds, [setup](#8-one-time-project-setup)):
 
 - Every merge to `main` runs `npm ci && npm run export`, then `npx wrangler deploy`: the live site updates.
-- Every other branch runs `npx wrangler versions upload`, which gives it its own **preview URL** without touching the live site. Check changes there before merging. Preview links ask officers to log in (Cloudflare Access), since they show unmerged changes.
+- Every other branch runs `npx wrangler preview` (Cloudflare's Worker Previews, in open beta), which gives it its own **preview URL** without touching the live site. Check changes there before merging. Preview links ask officers to log in (Cloudflare Access), since they show unmerged changes.
 
 The build machine's Node version comes from `.nvmrc`.
 
@@ -242,7 +242,7 @@ Done once when the project is set up or handed to new owners. Tick each off in [
 
 **Cloudflare Workers**
 1. Cloudflare dashboard → Workers & Pages → Create → **Import a repository** → install Cloudflare's GitHub app and grant it this repository → select it.
-2. Build command `npm ci && npm run export`; deploy command `npx wrangler deploy`; non-production branch deploy command `npx wrangler versions upload`; production branch `main`; root directory blank. No `NODE_VERSION` needed: `.nvmrc` sets it.
+2. Build command `npm ci && npm run export`; deploy command `npx wrangler deploy`; non-production branch deploy command `npx wrangler preview` (the default; it needs the `previews` block in `wrangler.jsonc`. If the beta misbehaves, `npx wrangler versions upload` also works); production branch `main`; root directory blank. No `NODE_VERSION` needed: `.nvmrc` sets it.
 3. Settings → Domains & Routes → add the custom domain `hivesocietyimprov.com`. Then send `www` to it: Rules → Redirect Rules → template **Redirect from WWW to root**, target `https://hivesocietyimprov.com` (not `www`, or it loops).
 4. **Lock previews to officers.** Preview links show unmerged changes, so only officers should see them. `wrangler.jsonc` already turns previews on and the public `workers.dev` address off; the login is set up here:
    - Turn on Zero Trust if it isn't yet, choosing the **Free** plan: up to 50 people, and over that it refuses new logins instead of billing. Cloudflare may ask for a card; check Manage Account → Billing afterwards shows Zero Trust Free at $0.
