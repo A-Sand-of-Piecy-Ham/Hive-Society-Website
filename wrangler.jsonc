@@ -3,6 +3,11 @@
 {
   "name": "hive-site",
   "compatibility_date": "2026-10-01",
+  // The live site exists only at hivesocietyimprov.com: no public copy at hive-site.<account>.workers.dev.
+  "workers_dev": false,
+  // Every branch gets a preview link (wrangler leaves these off unless asked). Cloudflare Access limits
+  // them to officers; see docs/RUNBOOK.md §8.
+  "preview_urls": true,
   "assets": {
     "directory": "./dist",
     // /about.html → /about, /about/ → /about: the clean URLs the local server mimics.
